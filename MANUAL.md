@@ -1,4 +1,4 @@
-## Manual
+# Outbrain Propagator Manual
 
 ### About
 
