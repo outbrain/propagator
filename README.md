@@ -25,6 +25,8 @@ _Propagator_ is released as open source under the [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0). Find project code in
 GitHub: <https://github.com/outbrain/propagator>
 
+Developed by Shlomi Noach.
+
 ### Documentation: installation, setup, usage
 
 Please read the [Propagator Manual](MANUAL.md)
