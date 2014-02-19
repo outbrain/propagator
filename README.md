@@ -7,6 +7,7 @@
   * Multi-environment: recognizes the differences between development, QA, build & production servers
   * Multi-technology: supports MySQL, Hive (Cassandra on the TODO list)
   * Multi-planetary: TODO
+
 It makes for a centralized deployment control, allowing for tracking, auditing
 and management of deployed scripts.
 
