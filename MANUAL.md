@@ -756,4 +756,3 @@ In the above, all scripts issued against instances of the `Hive` role, are
 stripped of commented lines (which the connector dislikes and will not
 accept).
 
-
