@@ -1,4 +1,4 @@
-# Outbrain Propagator Manual
+## Manual
 
 ### About
 
@@ -8,6 +8,7 @@
   * Multi-role: different servers have different schemas
   * Multi-environment: recognizes the differences between development, QA, build & production servers
   * Multi-technology: supports MySQL, Hive (Cassandra on the TODO list)
+  * Multi-user: allows users authenticated and audited access
   * Multi-planetary: TODO
 It makes for a centralized deployment control, allowing for tracking, auditing
 and management of deployed scripts.
@@ -27,6 +28,8 @@ _Propagator_ is released as open source under the [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
 
 Developed by Shlomi Noach.
+
+![](img/manual/man_img_deploy_status.png)
 
 ### Download
 
@@ -63,11 +66,11 @@ the following:
     
     
     $conf['db'] = array(
-        'host'	=> '127.0.0.1',
-        'port'	=> 3306,
-        'db'	=> 'propagator',
-        'user'	=> 'the_user',
-        'password' => 'the_password'
+    'host'	=> '127.0.0.1',
+    'port'	=> 3306,
+    'db'	=> 'propagator',
+    'user'	=> 'the_user',
+    'password' => 'the_password'
     );
 
 Finally, you will need to populate your database. Read on to understand the
@@ -102,10 +105,10 @@ instances and will require a manual user action. This is configurable in
     
     
     $conf['instance_type_deployment'] = array(
-            'production' 	=> 'manual',
-            'build' 		=> 'automatic',
-            'qa' 			=> 'automatic',
-            'dev' 			=> 'automatic'
+        'production' 	=> 'manual',
+        'build' 		=> 'automatic',
+        'qa' 			=> 'automatic',
+        'dev' 			=> 'automatic'
     );
 
 ##### Roles
@@ -296,6 +299,9 @@ Provide data as follows:
   * database_instance_id: instance for which this mapping applies
   * from_schema: name of schema to replace
   * to_schema: replacement schema name
+You may map the same `from_schema` into multiple `to_schema` values on the
+same instance, in which case a deployment on such instance will execute
+multiple times, on multiple schemas.
 
 `known_deploy_schema`: listing of schema names that are presented to the user:
 
@@ -319,6 +325,10 @@ Data in this table has no functional effect other than providing the user with
 possible schemas the user may wish to deploy a script on.
 
 ### Propagate scripts
+
+![](img/manual/man_img_propagate_role.png)
+
+![](img/manual/man_img_propagate_schema.png)
 
 This is the place to start actual usage of _Propagator_!
 
@@ -392,6 +402,10 @@ instance you're making a clear point that it should not be deployed to.
 
 ##### Status
 
+![](img/manual/man_img_deploy_query.png)
+
+![](img/manual/man_img_deploy_failed.png)
+
 This is the place where you can hopefully sit back, smile and relax, as your
 script is being deployed on approved instances. Alternatively, you can be at
 your keyboard and mouse, smile and relax as you control and diagnose
@@ -430,10 +444,19 @@ In case the script fails, you will see a "failed" message. Click the "failed"
 message to find out why: is it a credentials thing? A duplicate key? Other
 problem? The status message is always clickable.
 
+The **Mark as Passed** button ("thumb up") marks the script as successful.
+Maybe you issued the query yourself manually beforehand, in which case
+_Propagator_ may fail to deploy (e.g. "table already exists"). If you are
+certain the very same script has been fully deployed (all script queries
+executed or otherwise applied) use this action to override _Propagator_'s
+failure or inability to deploy.
+
 See also Advanced DBA actions for deployment actions that can override or
 resolve script deployment issues.
 
 ##### Commenting
+
+![](img/manual/man_img_deploy_comment.png)
 
 Adding a short comment is possible and encouraged, especial in the case where
 the script had trouble deploying. The comment can be associated with a "OK",
@@ -452,6 +475,8 @@ At bottom tabs, the following actions are made available:
   * Redeploy: a little bit tricky situation is when you add new instances to _Propagator_, that are not up to date with other instances (perhaps by the time you backed-up an instance and deplicated it onto another, some deployments were made). The **Redeploy** action simply adds to this deployment those hosts that were not previously there. It is then up to you to **Approve** them. 
 
 ### Reviewing script history
+
+![](img/manual/man_img_history_02.png)
 
 You can search, filter and view scripts history.
 
@@ -562,9 +587,9 @@ Included file would have an entry such as follows:
     
     
     $conf['instance_credentials'] = array(
-        "my.host01.name:3306" => "prop_user:super_duper_password_01",
-        "my.host02.name:3306" => "prop_user:super_duper_password_02",
-        "other.host.name:3306" => "prop_user:super_duper_password_99",
+    "my.host01.name:3306" => "prop_user:super_duper_password_01",
+    "my.host02.name:3306" => "prop_user:super_duper_password_02",
+    "other.host.name:3306" => "prop_user:super_duper_password_99",
     );
     
 
@@ -594,6 +619,8 @@ session, and gain more power over deployments.
 
 ### Advanced DBA actions
 
+![](img/manual/man_img_deploy_advanced_actions.png)
+
 The following actions are available to users recognized as DBAs:
 
 ##### Script deployment
@@ -605,7 +632,6 @@ instance-deployment entry:
   * Run Next Query: execute a single query from the script, and pause immediately after. If the script hasn't been started yet then the first query is executed; otherwise the query indicated by the **Current** column. 
   * Skip One Query: ignore the **Current** query and point to the next one. NOTE: you will be, umm, _skipping a query_. But that's why you are the DBA! 
   * Restart Deployment: completely restart the script and run it from the beginning. This could come in handy if you made some manual fixes to the database which would allow it to execute after first failing. 
-  * Mark as Passed: just mark the script as successful. Maybe you issued the query yourself instead of letting propagator do it. 
 
 ##### CRUD operations
 
@@ -648,9 +674,9 @@ the data center they're located in:
     
     
     $conf['instance_topology_pattern_colorify'] = array (
-    	"/[.]east/",
-    	"/[.]west/",
-    	"/localhost/"
+    "/[.]east/",
+    "/[.]west/",
+    "/localhost/"
     );
     
 
@@ -729,4 +755,5 @@ Similarly, one can specify a query mapping for an entire role:
 In the above, all scripts issued against instances of the `Hive` role, are
 stripped of commented lines (which the connector dislikes and will not
 accept).
+
 
