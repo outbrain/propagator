@@ -714,37 +714,39 @@ Two types of query transformations are supported at this time:
 An example can be:
 
     
-        select * from database_instance_query_mapping;
-    +----------------------+--------------+-------------+-------------------------+
-    | database_instance_id | mapping_type | mapping_key | mapping_value           |
-    +----------------------+--------------+-------------+-------------------------+
-    |                    9 | federated    | NULL        | localhost:3306/myschema |
-    +----------------------+--------------+-------------+-------------------------+
+	    select * from database_instance_query_mapping;
+	    +----------------------+--------------+-------------+-------------------------+
+	    | database_instance_id | mapping_type | mapping_key | mapping_value           |
+	    +----------------------+--------------+-------------+-------------------------+
+	    |                    9 | federated    | NULL        | localhost:3306/myschema |
+	    +----------------------+--------------+-------------+-------------------------+
     
 
-If your script includes, foe example, a `CREATE TABLE ... ENGINE=FEDERATED
-CONNECTION='super:duper@someserver:3307/'` query, the query is transformed to
-`CREATE TABLE ... ENGINE=FEDERATED
-CONNECTION='super:duper@localhost:3306/myschema'` for the specific instance
-specified (`database_instance_id` = 9).
+	If your script includes, foe example, a `CREATE TABLE ... ENGINE=FEDERATED
+	CONNECTION='super:duper@someserver:3307/'` query, the query is transformed to
+	`CREATE TABLE ... ENGINE=FEDERATED
+	CONNECTION='super:duper@localhost:3306/myschema'` for the specific instance
+	specified (`database_instance_id` = 9).
 
   * regex: a simple regular expression search and replace mechanism. Since _Propagator_ is a PHP application, you must provide the regular expression in PHP format. For example, the following: 
     
         select * from database_instance_query_mapping;
-    +----------------------+--------------+-----------------------+-------------------------------------------+
-    | database_instance_id | mapping_type | mapping_key           | mapping_value                             |
-    +----------------------+--------------+-----------------------+-------------------------------------------+
-    |                    9 | regex        | /CREATE[\s]+TRIGGER/i | CREATE DEFINER='root'@'localhost' TRIGGER |
-    +----------------------+--------------+-----------------------+-------------------------------------------+
+        +----------------------+--------------+-----------------------+-------------------------------------------+
+        | database_instance_id | mapping_type | mapping_key           | mapping_value                             |
+        +----------------------+--------------+-----------------------+-------------------------------------------+
+        |                    9 | regex        | /CREATE[\s]+TRIGGER/i | CREATE DEFINER='root'@'localhost' TRIGGER |
+        +----------------------+--------------+-----------------------+-------------------------------------------+
     
+	
+	Will implant the `DEFINER` clause within a `CREATE TRIGGER` statement in case
+	the user forgets to specify it. The above example applies only to a single
+	instance (`database_instance_id` = 9)  
 
-Will implant the `DEFINER` clause within a `CREATE TRIGGER` statement in case
-the user forgets to specify it. The above example applies only to a single
-instance (`database_instance_id` = 9)  
+
 Similarly, one can specify a query mapping for an entire role:
 
     
-        select * from database_role_query_mapping;
+    select * from database_role_query_mapping;
     +------------------+--------------+-------------+---------------+
     | database_role_id | mapping_type | mapping_key | mapping_value |
     +------------------+--------------+-------------+---------------+
