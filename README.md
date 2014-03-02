@@ -28,4 +28,3 @@ Developed by Shlomi Noach.
 
 Why don't you **[propagate a script**](index.php?action=input_script)?
 
-
