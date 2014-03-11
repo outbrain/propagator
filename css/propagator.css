@@ -1,0 +1,274 @@
+/*
+	propagator specific stylesheet
+*/
+.splash_row {
+  margin-top: 20px;
+  display: inline-block;
+  padding: 10px 20px;
+  *zoom: 1;
+}
+.splash_row:hover {
+	background-color: #2C2C2C;
+	border-radius: 4px;
+}
+.splash_row:hover a{
+	color: white;
+}
+.splash_row a:first-child {
+  padding: 10px;
+  *zoom: 1;
+}
+.splash_row a:hover {
+	color: white;
+	text-decoration: underline;
+}
+.navbar .nav > li > a {
+  padding: 20px 10px 11px;
+}
+.navbar .nav > li > div {
+  float: none;
+  padding: 20px 10px 11px;
+  line-height: 19px;
+  background-color: transparent;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+div.splash_main {
+	width: 700px;
+	text-align: left;
+	
+}
+div.splash_row {
+	text-align: left;
+}
+.splash_row:hover {
+	background-color: inherit;
+	border-radius: 0px;
+}
+textarea {
+	width: 100%;
+}
+textarea#script_sql_code {
+	height: 180px;
+}
+.minimal-width {
+	width: 0px;
+}
+
+table tr td img {
+	margin-bottom: -4px;
+	margin-left: 4px;
+	margin-right: 4px;
+}
+
+.ui-widget{font-size:12px;}
+.ui-button-text-only .ui-button-text {
+    padding: .1em .6em .2em;
+}
+.ui-widget-content a {
+    color: #0088CC;
+    text-decoration: none;
+}
+.notify-circle {
+    -webkit-border-radius: 999px;
+    -moz-border-radius: 999px;
+    border-radius: 999px;
+    behavior: url(PIE.htc);
+
+    width: 18px;
+    height: 18px;
+    padding: 0px;
+    
+    background: #777777;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+    text-align: center;
+    vertical-align: middle;
+    font-weight: bold;
+    
+    display: inline-block;
+}
+
+.notify-circle-info {
+    background: #3A87AD;
+}
+
+.notify-circle-success {
+    background: #468847;
+}
+.notify-circle-error {
+    background: #B94A48;
+}
+pre.script_sql_code {
+	max-height: 75px;
+	min-width: 375px;
+	overflow:	auto;
+	border-width: 0;
+	background-color: transparent;
+	padding: 2px;
+	margin: 0px;
+}
+pre.script_sql_code.prettyprint {
+	border-width: 0;
+}
+
+label.fancy_check {
+}
+label.fancy_check div {
+	display: inline-block;
+	padding: 4px;
+}
+label.fancy_check div:first-child {
+	padding:15px;
+	color: #ffffff;
+	font-size: x-large;
+	text-align: center;
+	vertical-align: middle;
+}
+
+label.fancy_check div.env_production {
+	background-color: #3A87AD;
+}
+label.fancy_check div.env_test {
+	background-color: #468847;
+}
+label.fancy_check div.env_dev {
+	background-color: #C09853;
+}
+
+th.script_deployment_actions {
+    min-width: 80px;
+}
+
+td.instance-environment-dev, .table-striped tbody tr:nth-child(2n+1) td.instance-environment-dev {
+	background-color: #8dc2de;
+}
+td.instance-environment-qa, .table-striped tbody tr:nth-child(2n+1) td.instance-environment-qa {
+	background-color: #3a87ad;
+}
+td.instance-environment-build, .table-striped tbody tr:nth-child(2n+1) td.instance-environment-build {
+	background-color: #25566e;
+}
+td.instance-environment-production, .table-striped tbody tr:nth-child(2n+1) td.instance-environment-production {
+	background-color: #173544;
+}
+td.instance-environment {
+	color: #ffffff;
+	text-transform: capitalize;
+}
+td.instance-environment a {
+	color: #ffffff;
+	text-decoration: none;
+	text-transform: capitalize;
+}
+
+img.mark_comment_icon {
+	margin-bottom: -4px;
+}
+
+.icon-refresh-animate {
+	animation-name: rotateThis;
+	animation-duration: 5s;
+	animation-iteration-count: infinite;
+	animation-timing-function: linear;
+}
+
+@keyframes rotateThis {
+	from { transform: scale( 1 ) rotate( 0deg );   }
+	to   { transform: scale( 1 ) rotate( 360deg ); }
+}
+
+pre.database_instance_topology {
+	font-weight: bold;
+}
+
+pre.database_instance_topology .palette-0 {	color: #C63D0F;}
+pre.database_instance_topology .palette-1 {	color: #7E8F7C;}
+pre.database_instance_topology .palette-2 {	color: #8baa16;}
+pre.database_instance_topology .palette-3 {	color: #558C89;}
+pre.database_instance_topology .palette-4 {	color: #D9853B;}
+pre.database_instance_topology .palette-5 {	color: #7D1935;}
+pre.database_instance_topology .palette-6 {	color: #6DBDD6;}
+pre.database_instance_topology .palette-7 {	color: #DF3D82;}
+pre.database_instance_topology .palette-8 {	color: #8c4646;}
+pre.database_instance_topology .palette-9 {	color: #33ccff;}
+
+th.database_instance_id {
+    width: 56px;
+}
+th.database_instance_host {
+    width: 250px;
+}
+th.database_instance_port {
+    width: 40px;
+}
+th.database_instance_env {
+    width: 100px;
+}
+
+#rewire_role_tab select {
+    min-width: 320px;
+}
+
+#rewire_role_tab input {
+    vertical-align: top;
+}
+
+#rewire_instance_tab input {
+    vertical-align: top;
+}
+
+.deployment-actions .pager {
+    margin: 0px;
+}
+
+.deployment-actions .pager li > a {
+    padding: 0px;
+    margin: 0 2px;
+}
+
+.deployment-actions span.glyphicon {
+    background-color: transparent;
+    padding-right: 4px;
+    margin-top: 4px;
+    margin-left: 4px;
+}
+
+#manual-content {
+    max-width: 800px;
+    float: right;
+}
+
+#manual-content pre.prettyprint {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    font-size: 12px;
+    margin: 0 0 9px;
+    padding: 8.5px;
+}
+#side-nav ul a {
+    padding: 4px 12px;
+}
+
+#side-nav ul li ul.nav {
+    display: none;
+    padding-left: 15px;
+    margin-bottom: 0px;
+}
+
+#side-nav ul li.active ul.nav {
+    display: block;
+}
+
+#side-nav ul li ul.nav a {
+    padding: 4px 12px;
+    margin: 0px;
+}
+
+
+#side-nav li.active > a {
+    background-color: inherit;
+    font-weight: bold;
+    color: #2c2c2c;
+}
+
