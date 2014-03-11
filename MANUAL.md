@@ -298,10 +298,19 @@ Provide data as follows:
 
   * database_instance_id: instance for which this mapping applies
   * from_schema: name of schema to replace
-  * to_schema: replacement schema name
+  * to_schema: replacement schema name. May contains '%' wildcards
+
 You may map the same `from_schema` into multiple `to_schema` values on the
 same instance, in which case a deployment on such instance will execute
 multiple times, on multiple schemas.
+
+Wildcard mapping is also supported. `to_schema` may take the form of `my_wp_%`
+which will match any schema name `LIKE 'my_wp_%'` (do note that '_' is in
+itself a wildcard. _Propagator_ only considers a mapping to be a "wildcard"
+mapping if it contains the '%' sign).
+
+Wildcard mapping requires that _Propagator_ pre-connects to relevant instance
+before deployment, to gather those schema names that match the wildcard.
 
 `known_deploy_schema`: listing of schema names that are presented to the user:
 
@@ -696,6 +705,11 @@ your test server.
 
 Based on the `database_instance_schema_mapping` table data, your script will
 be deployed differently, and automatically so, on different instances.
+
+You may map a schema name into multiple schemas matching some wildcard. This
+is useful if you have multiple similar schemas on the same database instance,
+all which have the same set of tables, all which should be affected by the
+same deployment. See Populate Database - Optional for more on this.
 
 If you don't have any such cases where your schemas can be named differently
 on different servers, you can safely ignore this feature.
