@@ -4,6 +4,10 @@
 CREATE DATABASE IF NOT EXISTS `propagator`;
 USE `propagator`;
 
+
+set foreign_key_checks := 0;
+
+
 --
 -- 
 --
