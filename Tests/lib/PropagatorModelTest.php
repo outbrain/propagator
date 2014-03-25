@@ -44,7 +44,7 @@ class PropagatorModelTest extends PHPUnit_Framework_TestCase
 	{
 		$this->data_model = new PropagatorModel(self::$conf);
 		$this->simple_script = array(
-			"script_sql_code" => "create or replace view t_v as select 19",
+			"script_sql_code" => "create or replace view t_v as select 19 as val",
 			"script_description" => "unit testing",
 			"database_role" => "olap",
 			"deployment_environments" => '',
@@ -66,7 +66,7 @@ class PropagatorModelTest extends PHPUnit_Framework_TestCase
 			"auth_user" => "unit_test"
 		);
 		$this->wildcard_script = array(
-			"script_sql_code" => "create or replace view t_v as select 23",
+			"script_sql_code" => "create or replace view t_v as select 23 as val",
 			"script_description" => "unit testing",
 			"database_role" => "olap",
 			"deployment_environments" => '',
@@ -169,7 +169,7 @@ class PropagatorModelTest extends PHPUnit_Framework_TestCase
     	}
     	$data = $this->ut_database->query("select * from t_v")->fetchAll();
     	$this->assertEquals(count($data), 1);
-    	$this->assertEquals($data[0]["19"], 19);
+    	$this->assertEquals($data[0]["val"], 19);
     }
 
     public function testSubmitWildcardScriptAndDeploy()
@@ -193,7 +193,7 @@ class PropagatorModelTest extends PHPUnit_Framework_TestCase
     	}
     	$data = $this->ut_database->query("select * from t_v")->fetchAll();
     	$this->assertEquals(count($data), 1);
-    	$this->assertEquals($data[0]["23"], 23);
+    	$this->assertEquals($data[0]["val"], 23);
     }
 
     public function testSubmitScriptAndDeployStepByStep()
@@ -278,6 +278,36 @@ class PropagatorModelTest extends PHPUnit_Framework_TestCase
     	}
     }
 
+    public function testSubmitScriptAndDeployRequiringDbaApproval()
+    {
+    	$propagate_script_id = $this->data_model->submit_script_for_propagation(
+    			$this->simple_script["script_sql_code"],
+    			$this->simple_script["script_description"],
+    			$this->simple_script["database_role"],
+    			$this->simple_script["deployment_environments"],
+    			$this->simple_script["default_schema"],
+    			$this->simple_script["auth_user"],
+    			$this->get_credentials());
+    	$this->assertGreaterThan(0, $propagate_script_id);
+    
+        	$deployments = $this->data_model->get_propagate_script_instance_deployment($propagate_script_id, '');
+    	foreach ($deployments as $deployment) {
+    		if ($deployment["database_instance_id"] == 6) {
+    			$this->data_model->approve_propagate_script($propagate_script_id, "unit_test", array($deployment["database_instance_id"]), true);
+    			$this->data_model->execute_propagate_script_instance_deployment($deployment["propagate_script_instance_deployment_id"], true, false, false, "unit_test", $this->get_credentials());
+    		}
+    	}
+    	$found_deployment = false;
+        $deployments = $this->data_model->get_propagate_script_instance_deployment($propagate_script_id, '');
+    	foreach ($deployments as $deployment) {
+    		if ($deployment["database_instance_id"] == 6) {
+    			$this->assertEquals($deployment["deployment_status"], "awaiting_dba_approval");
+    			$found_deployment = true;
+    		}
+    	}
+    	$this->assertTrue($found_deployment);
+    }
+    
     public function testDuplicateDatabaseInstance()
     {
         $database_instance_id = $this->data_model->duplicate_database_instance(2, "dup_host", 1234, "duplicate of database instance 2");

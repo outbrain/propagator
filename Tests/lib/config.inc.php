@@ -33,6 +33,10 @@ $conf['instance_type_deployment'] = array(
 		'qa' 			=> 'automatic',
 		'dev' 			=> 'automatic'
 );
+$conf['two_step_approval_environments'] = array(
+		'production',
+		'build'
+);
 
 $conf['history_visible_to_all'] = true;
 
@@ -200,7 +204,7 @@ CREATE TABLE `propagate_script_instance_deployment` (
   `deploy_schema` varchar(64) CHARACTER SET utf8 NOT NULL,
   `is_approved` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `deployment_type` enum('automatic','manual') NOT NULL,
-  `deployment_status` enum('awaiting_approval','disapproved','not_started','awaiting_guinea_pig','deploying','failed','passed','deployed_manually','paused') NOT NULL DEFAULT 'awaiting_approval',
+  `deployment_status` enum('awaiting_approval','disapproved','not_started','awaiting_guinea_pig','deploying','failed','passed','deployed_manually','paused','awaiting_dba_approval') NOT NULL DEFAULT 'awaiting_approval',
   `current_propagate_script_query_id` int(10) unsigned DEFAULT NULL,
   `failed_propagate_script_query_id` int(10) unsigned DEFAULT NULL,
   `processing_start_time` timestamp NULL DEFAULT NULL,
@@ -229,7 +233,7 @@ CREATE TABLE `propagate_script_query` (
   CONSTRAINT `query_propagate_script_id_fk` FOREIGN KEY (`propagate_script_id`) REFERENCES `propagate_script` (`propagate_script_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-
+alter table propagate_script_instance_deployment modify deployment_status enum('awaiting_approval','disapproved','not_started','awaiting_guinea_pig','deploying','failed','passed','deployed_manually','paused', 'awaiting_dba_approval') NOT NULL DEFAULT 'awaiting_approval';
 
 set foreign_key_checks := 1;
 		
@@ -238,9 +242,29 @@ set foreign_key_checks := 1;
 
 $conf['populate_fixture_db'] = "
 		
-INSERT INTO `database_instance` (`database_instance_id`, `host`, `port`, `environment`, `is_active`, `is_guinea_pig`) VALUES (1,'127.0.0.1',5532,'qa',1,1),(2,'127.0.0.1',5533,'dev',1,0),(3,'127.0.0.1',5534,'production',1,0),(4,'127.0.0.1',5535,'production',1,0),(5,'127.0.0.1',5536,'build',1,1);
-INSERT INTO `database_role` (`database_role_id`, `database_type`, `description`) VALUES ('olap','mysql','DWH server'),('oltp','mysql','main OLTP data backend'),('web','mysql','web interface backend');
-INSERT INTO `database_instance_role` VALUES (1,'olap'),(2,'olap'),(4,'olap'),(5,'olap'),(1,'oltp'),(2,'oltp'),(3,'oltp'),(5,'oltp'),(1,'web'),(2,'web'),(3,'web'),(5,'web');
+INSERT INTO `database_instance` 
+		(`database_instance_id`, `host`, `port`, `environment`, `is_active`, `is_guinea_pig`) 
+	VALUES 
+		(1,'127.0.0.1',5532,'qa',1,1),
+		(2,'127.0.0.1',5533,'dev',1,0),
+		(3,'127.0.0.1',5534,'production',1,0),
+		(4,'127.0.0.1',5535,'production',1,0),
+		(5,'127.0.0.1',5536,'build',1,1),
+		(6,'127.1',5532,'build',1,1)
+		;
+INSERT INTO `database_role` 
+		(`database_role_id`, `database_type`, `description`) 
+	VALUES 
+		('olap','mysql','DWH server'),
+		('oltp','mysql','main OLTP data backend'),
+		('web','mysql','web interface backend')
+	;
+INSERT INTO `database_instance_role` 
+	VALUES 
+		(1,'olap'),(2,'olap'),(4,'olap'),(5,'olap'),(6,'olap'),
+		(1,'oltp'),(2,'oltp'),(3,'oltp'),(5,'oltp'),(6,'oltp'),
+		(1,'web'),(2,'web'),(3,'web'),(5,'web'),(6,'web')
+	;
 INSERT INTO `database_instance_schema_mapping` (database_instance_schema_mapping_id, database_instance_id, from_schema, to_schema) VALUES (1,2,'web_data','dev_web_data'), (2,1,'wildcard_schema','propagator_ut_data_schem%');
 INSERT INTO `known_deploy_schema` (known_deploy_schema_id, schema_name) VALUES (3,'propagator_ut_data_schema'),(2,'test'),(1,'web_data');
 INSERT INTO `database_role_query_mapping` (database_role_id, mapping_type, mapping_key, mapping_value) VALUES ('oltp', 'regex', '/^[\\s]*create[\\s]+trigger/i', 'CREATE DEFINER=\'root\'@\'localhost\' TRIGGER');

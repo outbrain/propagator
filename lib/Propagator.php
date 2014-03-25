@@ -277,7 +277,8 @@ class Propagator {
     	$data['is_dba'] = $this->user_is_dba();
 		$data["approve_script_mode"] = true;
     	$data['has_credentials'] = $this->has_credentials();
-    	    
+    	$data['is_owner'] = (($this->get_auth_user() == $data["script"]["submitted_by"]) ? 1 : 0);
+
     	$this->header();
     
     	$this->load->view("view_script", $data);
@@ -380,6 +381,7 @@ class Propagator {
     	$data["propagate_script_queries"] = $this->data_model->get_propagate_script_query($propagate_script_id, $submitter);
     	$data["propagate_script_deployments"] = $this->data_model->get_propagate_script_deployments($propagate_script_id, $submitter);
     	$data["propagate_script_instance_deployments"] = $this->data_model->get_propagate_script_instance_deployment($propagate_script_id, $submitter);
+    	$data["propagate_script_instance_deployments_checksum"] = md5(serialize($data["propagate_script_instance_deployments"]));
     	$data["propagate_script_comments"] = $this->data_model->get_propagate_script_comments($propagate_script_id, $submitter);
     	 
     	$data['deployment_actions_available'] = true;

@@ -781,17 +781,29 @@ class PropagatorModel {
     			JOIN database_instance USING (database_instance_id)
    			WHERE
     			propagate_script_instance_deployment_id = " . $this->get_database()->quote($propagate_script_instance_deployment_id) . "
-    			AND deployment_status IN ('not_started', 'awaiting_guinea_pig', 'paused', 'failed')
+    			AND deployment_status IN ('not_started', 'awaiting_guinea_pig', 'paused', 'failed', 'awaiting_dba_approval')
     		")->fetchAll();
     	
     	if (empty($datas)) {
     		throw new Exception("Internal error: cannot read instance deployment info: propagate_script_instance_deployment_id=".$propagate_script_instance_deployment_id);
     	}
     	$propagate_script_instance_deployment = $datas[0];
+    	if (array_key_exists('two_step_approval_environments', $this->conf) 
+    		&& !empty($this->conf['two_step_approval_environments'])
+    		&& in_array($propagate_script_instance_deployment["environment"], $this->conf['two_step_approval_environments'])
+                    ) {
+			// This deployment has to further get approval of dba.    		
+    		if ($submitter != '') {
+				// normal user.
+    			$this->update_propagate_script_instance_deployment_status($propagate_script_instance_deployment_id, "awaiting_dba_approval", "A DBA must approve this deployment", $submitter);
+    			return;
+			}
+    	}
     	if ($propagate_script_instance_deployment['deployment_type'] == 'manual' && !$force_manual) {
     		// Do nothing: this is a manual deployment.
     		return;
     	}
+    	 
     	// Check for guinea pigs: 
     	// - A guinea pig can start off right away
     	// - A non-guinea pig must wait on at least one guinea pig to succeed
@@ -994,7 +1006,7 @@ class PropagatorModel {
 		$datas = $this->get_database()->query("
     		select
     			*,
-				deployment_status IN ('not_started','failed','paused') AS restartable_by_user
+				deployment_status IN ('not_started','failed','paused','awaiting_dba_approval') AS restartable_by_user
     		FROM
 				propagate_script_instance_deployment
     			JOIN propagate_script USING (propagate_script_id)
@@ -1263,7 +1275,7 @@ class PropagatorModel {
     			  WHERE propagate_script_query.propagate_script_id = propagate_script_instance_deployment.propagate_script_id
     			) AS query_progress_status,
     			database_instance.*,
-    			deployment_status IN ('not_started','failed') AS restartable_by_user	
+    			deployment_status IN ('not_started','failed','paused','awaiting_dba_approval') AS restartable_by_user	
     		FROM
     			propagate_script
     			JOIN propagate_script_instance_deployment USING(propagate_script_id)

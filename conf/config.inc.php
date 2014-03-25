@@ -39,6 +39,13 @@ $conf['instance_type_deployment'] = array(
 		'dev' 			=> 'automatic'
 );
 
+// By default production deployments are 'manual', such that the user has to explicitly click the "reload" button
+// so as to deploy. Change to 'automatic' in you have great faith
+$conf['two_step_approval_environments'] = array(
+		'production', 
+		'build'
+);
+
 //
 // Should script deployment history be visible to all users? If 'false' then only to 'dbas' group (see above);
 $conf['history_visible_to_all'] = true;
