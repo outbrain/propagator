@@ -151,7 +151,7 @@ CREATE TABLE `propagate_script_instance_deployment` (
 `deploy_schema` varchar(64) CHARACTER SET utf8 NOT NULL,
 `is_approved` tinyint(3) unsigned NOT NULL DEFAULT '0',
 `deployment_type` enum('automatic','manual') NOT NULL,
-`deployment_status` enum('awaiting_approval','disapproved','not_started','awaiting_guinea_pig','deploying','failed','passed','deployed_manually','paused') NOT NULL DEFAULT 'awaiting_approval',
+`deployment_status` enum('awaiting_approval','disapproved','not_started','awaiting_guinea_pig','deploying','failed','passed','deployed_manually','paused','awaiting_dba_approval') NOT NULL DEFAULT 'awaiting_approval',
 `current_propagate_script_query_id` int(10) unsigned DEFAULT NULL,
 `failed_propagate_script_query_id` int(10) unsigned DEFAULT NULL,
 `processing_start_time` timestamp NULL DEFAULT NULL,

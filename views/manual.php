@@ -5,7 +5,11 @@
     <ul class="nav nav-pills nav-stacked ">
         <li><a href="#About">About</a></li>
         <li><a href="#Download">Download</a></li>
-        <li><a href="#Install">Install</a></li>
+        <li><a href="#Install">Install</a>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#Install-Upgrade">Upgrade</a></li>
+            </ul>
+        </li>
         <li><a href="#Concepts">Concepts</a>
             <ul class="nav nav-pills nav-stacked">
                 <li><a href="#Concepts-Instances">Instances</a></li>
@@ -30,7 +34,13 @@
             </ul>
         </li>
         <li><a href="#Reviewing">Reviewing script history</a></li>
-        <li><a href="#Users">Users & privileges</a></li>
+        <li><a href="#Security">Security</a>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#Security-Authentication">Authentication</a></li>
+                <li><a href="#Security-Users">Users & privileges</a></li>
+				<li><a href="#Security-TwoPhaseApproval">Two phase approval</a></li>
+            </ul>
+        </li>
         <li><a href="#Credentials">Credentials</a>
             <ul class="nav nav-pills nav-stacked">
                 <li><a href="#Credentials-Session">Session</a></li>

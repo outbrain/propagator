@@ -69,19 +69,39 @@
     <p>
         <i>Propagator</i> uses MySQL as backend, where all metadata about your system and topologies is read from (see <a href="#Populate">Populate</a> section)
         and where all deployments, history and status are written. Use the provided <code>install.sql</code> file to generate the schema and tables.
-        By default, the schema name is <code>propagator</code>.
+        By default, the schema name is <code>propagator</code>. 
+    </p>
+    <p>
+    	Sample installation method:
+<pre class="prettyprint lang-bash">
+bash$ mysql -uroot -psecr3t &lt; install.sql 
+</pre>
     </p>
     <p>
         Next, you must tell <i>Propagator</i> where the MySQL database backend is, and provide with credentials.
         Update the <code>conf/config.inc.php</code> file in the like of the following:
 <pre class="prettyprint lang-php">
 $conf['db'] = array(
-'host'	=> '127.0.0.1',
-'port'	=> 3306,
-'db'	=> 'propagator',
-'user'	=> 'the_user',
-'password' => 'the_password'
+  'host'	=> '127.0.0.1',
+  'port'	=> 3306,
+  'db'	=> 'propagator',
+  'user'	=> 'the_user',
+  'password' => 'the_password'
 );</pre>
+    </p>
+    <a name="Install-Upgrade" id="Install-Upgrade"></a>
+    <h5>Upgrade</h5>
+    <p>
+    	<i>Propagator</i> is evolving, and further development requires schema changes. These are provided as "patches" to the original schema.
+    </p>
+    <p>
+    	In case you are upgrading from a previous installed version, 
+    	follow on to install any <code>install-db-migration-*</code> file that is later than your installation.
+    	If you're unsure, simply execute any <code>install-db-migration-*</code> file (ordered by name/timestamp) -
+    	and ignore any errors. You can do so via the following example: 
+<pre class="prettyprint lang-bash">
+bash$ mysql -uroot -psecr3t --force propagator &lt; install-db-migration-2014-03-24.sql
+</pre>
     </p>
     <p>
         Finally, you will need to populate your database. Read on to understand the <a href="#Concepts">Concepts</a>, then follow
@@ -547,7 +567,7 @@ $conf['instance_type_deployment'] = array(
     </p>
     <p>
         A user's own history is available via <strong>Welcome</strong> -&gt; <strong>My history</strong>.
-        If <code>history_visible_to_all</code> is set (see <a href="#Users">Users & privileges</a>), then any user
+        If <code>history_visible_to_all</code> is set (see <a href="#Security-Users">Users & privileges</a>), then any user
         can also browse history for all submitted scripts, not just his own. Complete history is available via
         <strong>Welcome</strong> -&gt; <strong>Script history</strong>.
     </p>
@@ -569,8 +589,14 @@ $conf['instance_type_deployment'] = array(
     </p>
 </div>
 <div>
-    <a name="Users" id="Users"></a>
-    <h3>Users & privileges</h3>
+    <a name="Security" id="Security"></a>
+    <h3>Credentials</h3>
+    <p>
+        <i>Propagator</i> deploys queries on remote databases. For this, it needs to get credentials on those servers.
+        At this stage there are two ways by which such credentials can be provided.
+    </p>
+    <a name="Security-Authentication" id="Security-Authentication"></a>
+    <h5>Authentication</h5>
     <p>
         At this stage, <i>Propagator</i> identifies users via <code>"PHP_AUTH_USER"</code>; this can be provided by
         Apache's <strong>.htaccess</strong>, by connecting to <strong>ldap</strong> server etc.
@@ -585,8 +611,10 @@ $conf['instance_type_deployment'] = array(
         In which case, any unidentified user is automatically mapped to <code>gromit</code>. If you're doing a one man show
         as DBA/developer this might be simplest.
     </p>
+    <a name="Security-Users" id="Security-Users"></a>
+    <h5>Users & privileges</h5>
     <p>
-        Not all users are equal. There are <i>normal</i> users, and there are <i>DBAs</i>. DBA users have greater privileges
+        All users are not equal. There are <i>normal</i> users, and there are <i>DBAs</i>. DBA users have greater privileges
         and broader set of actions (see <a href="#Advanced">Advanced DBA actions</a>).
     </p>
     <p>
@@ -604,7 +632,22 @@ $conf['instance_type_deployment'] = array(
         When true, Trudy can see the entire <a href="#Reviewing">history</a> and search it, as well as seeing
         details for all scripts deployed by other users. DBA users have this privilege implicitly.
     </p>
-</div>
+    
+    <a name="Security-TwoPhaseApproval" id="Security-TwoPhaseApproval"></a>
+    <h5>Two phase approval</h5>
+    <p>
+        Enhanced control can be set via <code>conf/config.inc.php</code>:
+<pre class="prettyprint lang-php">
+$conf['two_step_approval_environments'] = array(
+  'production', 
+  'build'
+);
+</pre>
+		In the above, any deployment to the two environments <code>production</code>, <code>build</code>
+		must be manually approved by a <a href="#Security-Users">DBA</a>. Even after the normal user approves
+		a deployment, it hangs until the second approval is submitted.
+        </p>
+    </div>
 <div>
     <a name="Credentials" id="Credentials"></a>
     <h3>Credentials</h3>
@@ -689,7 +732,7 @@ $conf['instance_credentials'] = array(
         <div><img src="img/manual/man_img_deploy_advanced_actions.png"/></div>
     </div>
     <p>
-        The following actions are available to users <a href="#Users">recognized as DBAs</a>:
+        The following actions are available to users <a href="#Security-Users">recognized as DBAs</a>:
     </p>
     <a name="Advanced-Deployment" id="Advanced-Deployment"></a>
     <h5>Script deployment</h5>

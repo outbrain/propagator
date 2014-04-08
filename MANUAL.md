@@ -59,6 +59,13 @@ topologies is read from (see Populate section) and where all deployments,
 history and status are written. Use the provided `install.sql` file to
 generate the schema and tables. By default, the schema name is `propagator`.
 
+Sample installation method:
+
+    
+    
+    bash$ mysql -uroot -psecr3t < install.sql 
+    
+
 Next, you must tell _Propagator_ where the MySQL database backend is, and
 provide with credentials. Update the `conf/config.inc.php` file in the like of
 the following:
@@ -66,12 +73,28 @@ the following:
     
     
     $conf['db'] = array(
-    'host'	=> '127.0.0.1',
-    'port'	=> 3306,
-    'db'	=> 'propagator',
-    'user'	=> 'the_user',
-    'password' => 'the_password'
+      'host'	=> '127.0.0.1',
+      'port'	=> 3306,
+      'db'	=> 'propagator',
+      'user'	=> 'the_user',
+      'password' => 'the_password'
     );
+
+##### Upgrade
+
+_Propagator_ is evolving, and further development requires schema changes.
+These are provided as "patches" to the original schema.
+
+In case you are upgrading from a previous installed version, follow on to
+install any `install-db-migration-*` file that is later than your
+installation. If you're unsure, simply execute any `install-db-migration-*`
+file (ordered by name/timestamp) - and ignore any errors. You can do so via
+the following example:
+
+    
+    
+    bash$ mysql -uroot -psecr3t --force propagator < install-db-migration-2014-03-24.sql
+    
 
 Finally, you will need to populate your database. Read on to understand the
 Concepts, then follow the instructions under the Populate section.
@@ -507,7 +530,13 @@ that a script is deployed on multiple instances. The listing indicates how
 many instances have been deployed successfully, how many have failed, and how
 many instances in total for this deployment.
 
-### Users & privileges
+### Credentials
+
+_Propagator_ deploys queries on remote databases. For this, it needs to get
+credentials on those servers. At this stage there are two ways by which such
+credentials can be provided.
+
+##### Authentication
 
 At this stage, _Propagator_ identifies users via `"PHP_AUTH_USER"`; this can
 be provided by Apache's **.htaccess**, by connecting to **ldap** server etc.
@@ -524,7 +553,9 @@ Otherwise, you can edit `conf/config.inc.php` to read:
 In which case, any unidentified user is automatically mapped to `gromit`. If
 you're doing a one man show as DBA/developer this might be simplest.
 
-Not all users are equal. There are _normal_ users, and there are _DBAs_. DBA
+##### Users & privileges
+
+All users are not equal. There are _normal_ users, and there are _DBAs_. DBA
 users have greater privileges and broader set of actions (see Advanced DBA
 actions).
 
@@ -550,6 +581,22 @@ read:
 When true, Trudy can see the entire history and search it, as well as seeing
 details for all scripts deployed by other users. DBA users have this privilege
 implicitly.
+
+##### Two phase approval
+
+Enhanced control can be set via `conf/config.inc.php`:
+
+    
+    
+    $conf['two_step_approval_environments'] = array(
+      'production', 
+      'build'
+    );
+    
+
+In the above, any deployment to the two environments `production`, `build`
+must be manually approved by a DBA. Even after the normal user approves a
+deployment, it hangs until the second approval is submitted.
 
 ### Credentials
 

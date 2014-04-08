@@ -14,6 +14,9 @@
 		It makes for a centralized deployment control, allowing for tracking, auditing and management of deployed scripts.
 	</p>
 	<p>
+		Further documentation can be found in the <a href="index.php?action=manual"><strong>manual</strong></a>.
+	</p>
+	<p>
 		<a href="http://xkcd.com/327/">
 			<img src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" alt="Little Bobby Tables"/>
 		</a>

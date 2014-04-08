@@ -39,12 +39,14 @@ $conf['instance_type_deployment'] = array(
 		'dev' 			=> 'automatic'
 );
 
-// By default production deployments are 'manual', such that the user has to explicitly click the "reload" button
-// so as to deploy. Change to 'automatic' in you have great faith
-$conf['two_step_approval_environments'] = array(
-		'production', 
-		'build'
-);
+// Deployments to these environments will require a DBA's approval (see $conf['dbas']). 
+// For a DBA user it is meaningless. For other users this means they will need to make a request
+// to a DBA.
+// When commented or when array is empty two-step approval is inactive.
+//$conf['two_step_approval_environments'] = array(
+//		'production', 
+//		'build'
+//);
 
 //
 // Should script deployment history be visible to all users? If 'false' then only to 'dbas' group (see above);
