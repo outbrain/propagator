@@ -1,0 +1,1 @@
+alter table propagate_script_instance_deployment modify deployment_status enum('awaiting_approval','disapproved','not_started','awaiting_guinea_pig','deploying','failed','passed','deployed_manually','paused', 'awaiting_dba_approval') NOT NULL DEFAULT 'awaiting_approval';

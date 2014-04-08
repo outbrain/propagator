@@ -1,4 +1,4 @@
-###### About Propagator
+## Outbrain Propagator
 
 **Propagator** is a schema & data deployment tool that works on a multi-everything topology: 
 
@@ -8,14 +8,16 @@
   * Multi-technology: supports MySQL, Hive (Cassandra on the TODO list)
   * Multi-user: allows users authenticated and audited access
   * Multi-planetary: TODO
+
 It makes for a centralized deployment control, allowing for tracking, auditing
 and management of deployed scripts.
 
-Further documentation can be found in the
-**[manual**](index.php?action=manual).
-
-[ ![Little Bobby Tables](http://imgs.xkcd.com/comics/exploits_of_a_mom.png)
-](http://xkcd.com/327/)
+It answers such questions as "Who added column 'x' to table 't' and when?",
+"Was that column added to the build & test servers?"; "It's not there; was
+there a failure? What was the failure?". It provides with: "OK, let's deploy
+it on all machines"; "There was some error and it's fixed now. Let's deploy
+again on this paritular instance"; "We already deployed this manually; so
+let's just mark it as 'deployed'".
 
 _Propagator_ is developed at [Outbrain](http://www.outbrain.com) to answer for
 the difficulty in managing schema changes made by dozens of developers on a
@@ -27,7 +29,8 @@ GitHub: <https://github.com/outbrain/propagator>
 
 Developed by Shlomi Noach.
 
-###### Not sure what to do next?
+### Documentation: installation, setup, usage
 
-Why don't you **[propagate a script**](index.php?action=input_script)?
+Please read the [Propagator Manual](MANUAL.md)
+
 
