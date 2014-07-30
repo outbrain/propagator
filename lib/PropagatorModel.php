@@ -54,8 +54,14 @@ class PropagatorModel {
     function error_result($message) {
     	return array('error' => $message);
     }
-    
 
+    function get_conf_param($param_name, $default_value) {
+    	if(array_key_exists($param_name, $this->conf) && $this->conf[$param_name]) {
+    		return $this->conf[$param_name];
+    	}
+    	return $default_value;
+    }
+    
     function submit_script_for_propagation($script_sql_code, $script_description, $database_role, $deployment_environments, $default_schema, $auth_user, $credentials) {
     	$script_sql_code = trim($script_sql_code);
         if (empty($database_role)) {
@@ -450,14 +456,39 @@ class PropagatorModel {
    	    ");
     }
 
-
     function get_database_instance_topology($database_instance, $username, $password) {
     	$host = $database_instance ['host'];
     	$port = $database_instance ['port'];
-    	$process_command = "pt-slave-find --recursion-method=processlist,hosts --report-format=hostname h=$host,P=$port,u=$username,p=$password";
+    	$pt_slave_find = $this->get_conf_param('pt-slave-find', 'pt-slave-find');
+    	$process_command = $pt_slave_find." --recursion-method=processlist,hosts --report-format=hostname h=$host,P=$port,u=$username,p=$password";
     	exec($process_command, $exec_output, $exec_return_code);
-    	
+    
     	$exec_output = convert_ips_to_hostnames($exec_output);
+    
+    	return $exec_output;
+    }
+    
+
+    function get_database_instances_diff($database_instance_src, $database_instance_dst, $schema, $credentials) {
+    	$host_src = $database_instance_src['host'];
+    	$port_src = $database_instance_src['port'];
+		$schema_src = $this->get_computed_database_instance_mapped_schemas(null, $database_instance_src, $schema, $credentials);
+		$schema_src = $schema_src[0];
+    	$host_dst = $database_instance_dst['host'];
+    	$port_dst = $database_instance_dst['port'];
+		$schema_dst = $this->get_computed_database_instance_mapped_schemas(null, $database_instance_dst, $schema, $credentials);
+		$schema_dst = $schema_dst[0];
+		
+		$username = $credentials->get_username();
+		$password = $credentials->get_password();
+		
+    	$mysqldiff = $this->get_conf_param('mysqldiff', 'mysqldiff');
+    	$process_command = $mysqldiff." --server1=$username:$password@$host_src:$port_src --server2=$username:$password@$host_dst:$port_dst $schema_src:$schema_dst";
+		error_log("host: $host_src");
+		error_log("schema: $schema_src");
+		error_log("processcommand: $process_command");
+		
+    	exec($process_command, $exec_output, $exec_return_code);
     	
     	return $exec_output;
     }
@@ -773,6 +804,17 @@ class PropagatorModel {
      * @throws Exception
      */
     public function execute_propagate_script_instance_deployment($propagate_script_instance_deployment_id, $force_manual, $restart_script, $run_single_query, $submitter, $credentials) {
+		if ($force_manual) {
+	    	$this->get_database()->query("
+	    			UPDATE 
+	    				propagate_script_instance_deployment 
+	    			SET 
+	    				manual_approved=1 
+	    			WHERE 
+	    				propagate_script_instance_deployment_id = " . $this->get_database()->quote($propagate_script_instance_deployment_id) . " 
+	    				AND submitted_by LIKE ".$this->get_database()->quote($submitter)."
+	    			");
+    	}
     	$datas = $this->get_database()->query("
     		SELECT
     			*
@@ -799,8 +841,8 @@ class PropagatorModel {
     			return;
 			}
     	}
-    	if ($propagate_script_instance_deployment['deployment_type'] == 'manual' && !$force_manual) {
-    		// Do nothing: this is a manual deployment.
+    	if ($propagate_script_instance_deployment['deployment_type'] == 'manual' && !$propagate_script_instance_deployment['manual_approved']) {
+    		// Do nothing: this is a manual deployment, and force_manual was not provided.
     		return;
     	}
     	 
@@ -1304,7 +1346,7 @@ class PropagatorModel {
     	return $datas;
     }
     
-    
+
     function get_instance_deployments_history($database_instance_id, $submitter) {
     	if(empty($submitter)) {
     		$submitter = '%';
@@ -1328,9 +1370,35 @@ class PropagatorModel {
     		LIMIT 100
     		")->fetchAll();
     	return $datas;
-	}
+    }
     
 
+    function get_pending_instance_deployments_history($database_instance_id, $submitter) {
+    	if(empty($submitter)) {
+    		$submitter = '%';
+    	}
+    	$datas = $this->get_database()->query("
+    		select
+    			propagate_script_instance_deployment.*,
+    			database_instance.*,
+    			TRUE AS action_enabled
+    		FROM
+    			database_instance
+    			JOIN propagate_script_instance_deployment USING(database_instance_id)
+    			JOIN propagate_script USING(propagate_script_id)
+    		WHERE
+    			database_instance_id = ".$this->get_database()->quote($database_instance_id)."
+    			AND deployment_status NOT IN ('disapproved', 'passed', 'deployed_manually')
+    		ORDER BY
+    			propagate_script_id DESC,
+				is_guinea_pig DESC,
+    			deployment_type ASC,
+    			propagate_script_instance_deployment_id
+    		")->fetchAll();
+    	return $datas;
+    }
+    
+    
 	function get_propagate_script_comments($propagate_script_id, $submitter) {
 		if(empty($submitter)) {
 			$submitter = '%';

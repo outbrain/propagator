@@ -1,7 +1,7 @@
 <div class="navbar navbar-fixed-top">
   <div class="navbar-inner">
     <div class="container">
-      <a class="brand" href="<?php echo site_url() ?>"><img src="img/outbrain-logo.png" alt="outbrain"> propagator</a>
+      <a class="brand" href="<?php echo site_url() ?>"><img src="img/outbrain-logo-s.png" alt="outbrain"><br/>propagator</a>
       <div class="nav-collapse">
         <ul class="nav">
            <li class="divider-vertical"></li>
@@ -51,6 +51,18 @@
                 </ul>
             </li>
             <li><a href="<?php echo site_url(). "?action=mappings"; ?>">Mappings</a></li>
+            <!--
+			<li class="dropdown">
+	        	<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    Sync
+					<b class="caret"></b> 
+				</a>
+                <ul class="dropdown-menu">
+	                <li><a href="<?php echo site_url().'?action=update_instance' ?>">Update instance</a></li>
+					<li><a href="<?php echo site_url().'?action=compare_instances' ?>">Compare instances</a></li>
+	        	</ul>
+			</li>
+			-->
             <?php if (!$has_credentials ) { ?>
 	           	<li data-warn-missing-credentials="true"><a data-link-type="input_credentials" href="<?php echo site_url().'?action=input_credentials' ?>" title="No credentials"><img src="img/exclamation-mark.png" alt="no credentials"></a></li>
 	        <?php } ?>

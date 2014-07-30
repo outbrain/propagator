@@ -264,7 +264,7 @@
 var need_update_countdown = 0;
 $(document).ready(function() {
 	
-	$("#all_deployment_instances").live("click", function() {
+	$("input.all_deployment_instances").live("click", function() {
 		var is_checked = this.checked;
 	    $("input[name='instance[]']").each(function(index) {
 	    	if (!$(this).is(":disabled")) {
@@ -488,16 +488,23 @@ $(document).ready(function() {
 
 
 function request_execute_propagate_script_instance_deployments() {
-	<?php  if ($is_owner) { ?>
-		$("*[data-deployment-status='not_started'], *[data-deployment-status='awaiting_guinea_pig']").each(function(index) {
-			if ($(this).attr("data-deployment-type") == "automatic") {
-				$.get("index.php?action=execute_propagate_script_instance_deployment&propagate_script_instance_deployment_id="+$(this).attr('data-propagate-script-instance-deployment-id'), function(data) {
-					if (data == 'no_credentials') {
-						return prompt_for_credentials();
-					}
-				});
+
+	function execute_propagate_script_instance_deployment(propagate_script_instance_deployment_id) {
+		$.get("index.php?action=execute_propagate_script_instance_deployment&propagate_script_instance_deployment_id="+propagate_script_instance_deployment_id, function(data) {
+			if (data == 'no_credentials') {
+				return prompt_for_credentials();
 			}
 		});
+	}
+	<?php  if ($is_owner) { ?>
+	$("*[data-deployment-status='not_started']").each(function(index) {
+		if ($(this).attr("data-deployment-type") == "automatic") {
+			execute_propagate_script_instance_deployment($(this).attr('data-propagate-script-instance-deployment-id'));
+		}
+	});
+	$("*[data-deployment-status='awaiting_guinea_pig']").each(function(index) {
+		execute_propagate_script_instance_deployment($(this).attr('data-propagate-script-instance-deployment-id'));
+	});
 	<?php } ?>
 }
 

@@ -63,6 +63,12 @@ $conf['instance_topology_pattern_colorify'] = array (
 );
 
 
+$conf['pt-slave-find'] = '';
+
+$conf['mysqldiff'] = '/home/snoach/dev/outbrain/trunk/production/tools/mysql-utilities/mysqldiff --difftype=sql --force --changes-for=server2 --skip-table-options ';
+
+
+
 // Choose how propagator gets credentials to deployment servers (MySQL, Hive, ...)
 // If empty/undefined, then user is prompted to enter credentials. These must apply on any server the user wishes
 // to deploy to (though the user is allowed to resubmit credentials and execute on particular servers as she pleases)

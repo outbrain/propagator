@@ -8,7 +8,7 @@
 			<table class="table table-striped table-bordered table-condensed">
 				<thead>
 					<tr>
-						<th class="minimal-width"><input type="checkbox" name="all_deployments" id="all_deployment_instances" value="1" ></th>
+						<th class="minimal-width"><input type="checkbox" name="all_deployments" class="all_deployment_instances" value="1" ></th>
 						<th>Env</th>
 						<th>Script id</th>
 						<th>Instance host</th>
