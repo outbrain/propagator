@@ -165,6 +165,7 @@
 		<center>
 			<button class="btn btn-primary btn-small" type="button" id="approve_script_form_approve_button"/>Approve</button>
 			<input class="btn-small alert-error" type="submit" value="Disapprove" name="disapprove" id="approve_script_form_disapprove_button"/>
+			<input class="btn-small alert-success" type="submit" value="Run manual" name="run manual" id="approve_script_form_run_manual_button" title="Bulk execute all manual deployments"/>
 		</center>
 	</div>
 </form>
@@ -325,6 +326,21 @@ $(document).ready(function() {
 		return false;
 	});
 
+	$("#approve_script_form_run_manual_button").live("click", function() {
+		var approved_manual_deployments = review_approved_manual_deployments();
+		approved_manual_deployments.forEach(function(propagate_script_instance_deployment_id) {
+            $.get("index.php?action=mark_propagate_script_instance_deployment&status=not_started&propagate_script_instance_deployment_id="+propagate_script_instance_deployment_id, function() {
+                $.get("index.php?action=execute_propagate_script_instance_deployment&force_manual=true&message="+encodeURIComponent("Resumed manually")+"&propagate_script_instance_deployment_id="+propagate_script_instance_deployment_id, function(data) {
+                    if (data == 'no_credentials') {
+                        return prompt_for_credentials();
+                    }
+                });
+                update_deployment_status(true);
+            });		
+		});
+		return false;
+	});                 
+	
 	$("*[data-retry-deployment]").live("click", function() {
 		var propagate_script_instance_deployment_id = $(this).attr('data-propagate-script-instance-deployment-id');
         var message = "";
@@ -486,6 +502,16 @@ $(document).ready(function() {
 	});
 });
 
+function review_approved_manual_deployments() {
+	var approved_manual_deployments = new Array();
+	$("*[data-deployment-status='not_started']").each(function(index) {
+		if ($(this).attr("data-deployment-type") == "manual") {
+			approved_manual_deployments.push($(this).attr('data-propagate-script-instance-deployment-id'));
+		}
+	});
+	return approved_manual_deployments;
+}
+
 
 function request_execute_propagate_script_instance_deployments() {
 
@@ -523,6 +549,14 @@ function apply_approve_script_form_buttons_enabled() {
 		$('#approve_script_form_approve_button').attr('disabled','disabled');
 		$('#approve_script_form_disapprove_button').attr('disabled','disabled');
 	}
+
+	var approved_manual_deployments = review_approved_manual_deployments();
+	if (approved_manual_deployments.length > 0) {
+		$('#approve_script_form_run_manual_button').show();
+	} else {
+		$('#approve_script_form_run_manual_button').hide();
+	}
+	
 	return enable_form_buttons;
 }
 

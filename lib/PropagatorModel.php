@@ -805,14 +805,15 @@ class PropagatorModel {
      */
     public function execute_propagate_script_instance_deployment($propagate_script_instance_deployment_id, $force_manual, $restart_script, $run_single_query, $submitter, $credentials) {
 		if ($force_manual) {
-	    	$this->get_database()->query("
+			$submitter_mask = (empty($submitter) ? '%' : $submitter);
+			$this->get_database()->query("
 	    			UPDATE 
 	    				propagate_script_instance_deployment 
 	    			SET 
 	    				manual_approved=1 
 	    			WHERE 
 	    				propagate_script_instance_deployment_id = " . $this->get_database()->quote($propagate_script_instance_deployment_id) . " 
-	    				AND submitted_by LIKE ".$this->get_database()->quote($submitter)."
+	    				AND submitted_by LIKE ".$this->get_database()->quote($submitter_mask)."
 	    			");
     	}
     	$datas = $this->get_database()->query("
