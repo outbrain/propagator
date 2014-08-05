@@ -155,7 +155,6 @@
 		}
 
 		function checkIfScriptAlreadyExists() {
-		    var script_is_valid = false;
 			$.post("index.php", {action: "check_for_existing_script", script_sql_code: $("#script_sql_code").val()}, function(check_result) {
 					if(check_result.script_exists) {
 						bootbox.confirm(

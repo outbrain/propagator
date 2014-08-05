@@ -51,18 +51,26 @@
                 </ul>
             </li>
             <li><a href="<?php echo site_url(). "?action=mappings"; ?>">Mappings</a></li>
-            <!--
-			<li class="dropdown">
-	        	<a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    Sync
-					<b class="caret"></b> 
-				</a>
-                <ul class="dropdown-menu">
-	                <li><a href="<?php echo site_url().'?action=update_instance' ?>">Update instance</a></li>
-					<li><a href="<?php echo site_url().'?action=compare_instances' ?>">Compare instances</a></li>
-	        	</ul>
-			</li>
-			-->
+        	<?php if ($is_dba) { ?>
+        	<!-- 
+				<li class="dropdown">
+		        	<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+	                    Sync
+						<b class="caret"></b> 
+					</a>
+	                <ul class="dropdown-menu">
+		                <li><a href="<?php echo site_url().'?action=update_instance' ?>">Update instance</a></li>
+						<li><a href="<?php echo site_url().'?action=compare_instances' ?>">Compare instances</a></li>
+						<li class="divider"></li>
+						<?php foreach ($database_roles as $database_role) { ?>
+							<?php if ($database_role['database_type'] == 'mysql') { ?>
+								<li><a href="<?php echo site_url().'?action=compare_database_role&database_role_id='.$database_role['database_role_id']; ?>"><span class="glyphicon glyphicon-transfer"></span> <?php echo $database_role['database_role_id']; ?></a></li>
+							<?php } ?>
+						<?php } ?>
+					</ul>
+				</li>
+				 -->
+			<?php } ?>
             <?php if (!$has_credentials ) { ?>
 	           	<li data-warn-missing-credentials="true"><a data-link-type="input_credentials" href="<?php echo site_url().'?action=input_credentials' ?>" title="No credentials"><img src="img/exclamation-mark.png" alt="no credentials"></a></li>
 	        <?php } ?>

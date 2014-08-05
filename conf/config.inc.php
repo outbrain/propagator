@@ -29,6 +29,7 @@ $conf['default_login'] = 'gromit';
 // Accounts with DBA privileges: mark deployments as "manually deployed", restart deployments, view topologies
 $conf['dbas'] = array('gromit', 'penguin');
 $conf['blocked'] = array('badboy');
+$conf['restrict_credentials_input_to_dbas'] = true;
 
 // By default production deployments are 'manual', such that the user has to explicitly click the "reload" button
 // so as to deploy. Change to 'automatic' in you have great faith

@@ -724,6 +724,12 @@ $conf['instance_credentials'] = array(
         to have <code>SUPER</code> or <code>RELOAD</code> MySQL privileges for automated deployments?). Nevertheless
         a DBA with super-user privileges may set her privileges in session, and gain more power over deployments.
     </p>
+    <p>
+    	A configuration variable controls whether normal users are indeed allowed to enter their own credentials
+    	(this is the default). One may disallow this, and only permit DBAs to enter their own credentials.
+    	Edit <code>conf/config.inc.php</code> to read:
+<pre class="prettyprint lang-php">$conf['restrict_credentials_input_to_dbas'] = true;</pre>
+    </p>
 </div>
 <div>
     <a name="Advanced" id="Advanced"></a>

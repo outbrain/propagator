@@ -122,6 +122,9 @@ class Propagator {
     	$data['propagator_mysql_password'] = get_var('password');
     
     	try {
+    	    if ($this->conf['restrict_credentials_input_to_dbas'] && !$this->user_is_dba()) {
+    			throw new Exception("Unauthorized: only DBAs can input credentials");
+    		}
     		$this->data_model->verify_mysql_credentials($data['propagator_mysql_user'], $data['propagator_mysql_password']);
     		print '{"success" : true}';
     	}
@@ -139,6 +142,9 @@ class Propagator {
     
     public function set_credentials()
     {
+        if ($this->conf['restrict_credentials_input_to_dbas'] && !$this->user_is_dba()) {
+    		throw new Exception("Unauthorized: only DBAs can input credentials");
+    	}
     	$data['propagator_mysql_user'] = get_var('propagator_mysql_user');
     	$data['propagator_mysql_password'] = get_var('propagator_mysql_password');
     	$data['ajax'] = get_var('ajax');
@@ -531,7 +537,27 @@ class Propagator {
    		}
     }
 
-
+    public function compare_database_role() {
+    	if (!$this->user_is_dba()) {
+    		throw new Exception("Unauthorized");
+    	}
+    	
+    	$data = $this->header();
+    
+    	$data['database_role_id'] = get_var('database_role_id');
+    
+    	$data['database_role'] = $this->data_model->get_database_role($data['database_role_id']);
+    	$data['instances'] = $this->data_model->get_instances_by_role($data['database_role_id']);
+    	$data['instances_compact'] = implode("\n", array_map(function($instance) { return $instance['host'].":".$instance['port']; }, $data['instances']));
+    	$data['assigned_instance_ids'] = array_map(function($instance) { return $instance['database_instance_id']; }, $data['instances']);
+    
+    	$data['query_mappings'] = safe_presentation_query_mappings($this->data_model->get_database_role_query_mapping($data['database_role_id']));
+    
+    	$this->load->view("compare_database_role", $data);
+    	$this->footer();
+    }
+    
+    
     public function database_instances() {
     	$this->header();
 
