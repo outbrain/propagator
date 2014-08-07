@@ -431,7 +431,7 @@ class Propagator {
     	 
        	try
     	{
-    		$this->data_model->comment_script($propagate_script_id, $script_comment, $comment_mark, $this->get_auth_user());
+    		$this->data_model->comment_script($propagate_script_id, $script_comment, $comment_mark, $this->get_auth_user(), $submitter);
     		return $this->redirect("view_script", "propagate_script_id=" . $propagate_script_id);
     	}
     	catch (Exception $e)
@@ -443,12 +443,16 @@ class Propagator {
 
     public function propagate_script_history() {
        	$submitter = get_var('submitter');
-    	if (!$this->user_is_dba() && !$this->conf['history_visible_to_all']) {
+        if ($submitter == ":me:") {
+    		$submitter = $this->get_auth_user();
+    	}
+       	if (!$this->user_is_dba() && !$this->conf['history_visible_to_all']) {
     		$submitter = $this->get_auth_user();
     	}
     	$script_fragment = get_var('script_fragment');
     	$database_role_id = get_var('database_role_id');
     	$default_schema = get_var('default_schema');
+    	$filter = get_var('filter');
     	$page = (int)get_var('page');
     	if (empty($page)) {
     		$page = 0;
@@ -457,11 +461,12 @@ class Propagator {
     		$page = 0;
     	}
     	 
-    	$data["propagate_scripts"] = $this->data_model->get_propagate_script_history($page, $submitter, $script_fragment, $database_role_id, $default_schema);
+    	$data["propagate_scripts"] = $this->data_model->get_propagate_script_history($page, $submitter, $script_fragment, $database_role_id, $default_schema, $filter);
     	$data["submitter"] = $submitter;
     	$data["script_fragment"] = $script_fragment;
     	$data["database_role_id"] = $database_role_id;
     	$data["default_schema"] = $default_schema;
+    	$data["filter"] = $filter;
     	$data["page"] = $page;
     	$data["has_previous_page"] = ($page > 0);
     	$data["has_next_page"] = (count($data["propagate_scripts"]) >= $this->data_model->pagination_page_size);

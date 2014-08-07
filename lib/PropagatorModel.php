@@ -254,17 +254,32 @@ class PropagatorModel {
     	$this->get_database()->delete("propagate_script_instance_deployment", $where_conditions);
     }
 
-    function comment_script($propagate_script_id, $script_comment, $comment_mark, $submitter) {
+    function comment_script($propagate_script_id, $script_comment, $comment_mark, $auth_user, $submitter) {
     	$script_comment = trim($script_comment);
     	if (!$script_comment) {
     		throw new Exception("Comment must not be empty");
     	}
     	$this->get_database()->insert("propagate_script_comment", array(
     			"propagate_script_id" => $propagate_script_id,
-    			"submitted_by" => $submitter,
+    			"submitted_by" => $auth_user,
     			"comment_mark" => $comment_mark,
     			"comment" => $script_comment
     	));
+    	if ($comment_mark == "cancelled") {
+    		$submitter = (empty($submitter) ? '%' : $submitter);
+    		$this->get_database()->query("
+				UPDATE
+					propagate_script_instance_deployment
+				SET 
+					deployment_status = 'disapproved',
+	                manual_approved = 0,
+					last_message = 'disapproved due to cancelled mark'
+				WHERE
+					propagate_script_id = ".$this->get_database()->quote($propagate_script_id)."
+					AND deployment_status IN ('awaiting_approval', 'not_started', 'awaiting_guinea_pig', 'awaiting_dba_approval')
+					AND submitted_by LIKE ".$this->get_database()->quote($submitter)."				
+    		");
+    	}
     }
     
     function get_database_role($database_role_id) {
@@ -1127,7 +1142,7 @@ class PropagatorModel {
 	}
 	
 
-    function get_propagate_script_history($page, $submitter, $script_fragment, $database_role_id, $database_schema){
+    function get_propagate_script_history($page, $submitter, $script_fragment, $database_role_id, $database_schema, $filter) {
     	if(empty($page)) {
     		$page = 0 ;
     	}
@@ -1164,6 +1179,10 @@ class PropagatorModel {
 	    		AND
 			";
     	}
+    	$having_condition = "";
+    	if ($filter == "incomplete") {
+    		$having_condition = "HAVING count_deployment_servers > count_deployment_servers_passed + count_deployment_servers_failed";
+    	}
     	$datas = $this->get_database()->query("
     		select
     			propagate_script.*,
@@ -1182,6 +1201,7 @@ class PropagatorModel {
     			)
        		GROUP BY
     			propagate_script_id
+    		$having_condition
     		ORDER BY
     			propagate_script.submitted_at DESC,
     			propagate_script.propagate_script_id DESC

@@ -80,8 +80,9 @@
 					<b class="caret"></b>	                      
                 </a>
                 <ul class="dropdown-menu">
-	                <li><a href="<?php echo site_url().'?action=propagate_script_history&submitter='.$auth_user ?>">My history</a></li>
-	                <?php if ($history_visible_to_all) { ?>
+	                <li><a href="<?php echo site_url().'?action=propagate_script_history&submitter=:me:' ?>">My history</a></li>
+                    <li><a href="<?php echo site_url().'?action=propagate_script_history&submitter=:me:&filter=incomplete' ?>">My incomplete deployments</a></li>
+                    <?php if ($history_visible_to_all) { ?>
 	                	<li><a href="<?php echo site_url().'?action=propagate_script_history' ?>">Script history</a></li>
                 	<?php } ?>
                 	<li><a href="<?php echo site_url().'?action=input_credentials' ?>" data-link-type="input_credentials">Set credentials</a></li>
