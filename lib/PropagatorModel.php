@@ -653,10 +653,17 @@ class PropagatorModel {
                     $mapped_schemas[] = $mapping["to_schema"];
                 }
                 else {
-                    // Wildcard mapping
-                    if ($credentials->is_empty()) {
-                        throw new Exception("Wildcard mapping found, but no credentials available");
-                    }
+					// Wildcard mapping
+					$instance_credentials = $credentials;
+					if ($instance_credentials->is_empty() && empty($this->instance_credentials)) {
+						throw new Exception( "Wildcard mapping found, but no credentials available" );
+					}
+					if ($instance_credentials->is_empty() && $this->instance_credentials) {
+						$stored_credentials = $this->get_instance_credentials($instance['host'], $instance['port'] );
+						if ($stored_credentials) {
+							$instance_credentials = $stored_credentials;
+						}
+					}
                     // Connect to remote database and find databases (schemas) matching wildcard
 
                     //~~~
@@ -665,8 +672,8 @@ class PropagatorModel {
                             'default_schema' => '',
                             'host' => $instance['host'],
                             'port' => $instance['port'],
-                            'user' => $credentials->get_username(),
-                            'password' => $credentials->get_password()
+                            'user' => $instance_credentials->get_username(),
+                            'password' => $instance_credentials->get_password()
     	        	));
     	        	$schemas = $database_wrapper->get_schemas_like($mapping["to_schema"]);
     	        	foreach($schemas as $schema) {
