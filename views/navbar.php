@@ -91,14 +91,11 @@
             </li>
           </ul>
       </div><!--/.nav-collapse -->  
-        <?php if ($is_dba) { ?>
         <form class="form-search form-inline pull-right" id="script_search" action="index.php" method="get">
         	<input type="hidden" name="action" value="propagate_script_history"/>
 			<input type="text" class="input-medium" name="script_fragment" placeholder="Script fragment"/>
 			<a class="btn" href="javascript:document.getElementById('script_search').submit()"><i class="icon-search"></i> Find script</a>
         </form>
-        <?php } ?>
-      
     </div>
   </div>
 </div>
