@@ -65,10 +65,18 @@ class EventManager {
     private function add_listener ($listener) {
         if (!empty($listener) && is_array($listener)) {
             $listen = array();
-            $event = null;
+            $event = array();
             
             if (!empty($listener['event'])) {
-                $event = $listener['event'];
+                if (is_string($listener['event'])) {
+                    $event[] = $listener['event'];
+                } elseif (is_array($listener['event'])) {
+                    foreach ($listener['event'] as $e) {
+                        if (is_string($e)) {
+                            $event[] = $e;
+                        }
+                    }
+                }
             }
             
             if (!empty($event)) {
@@ -80,7 +88,9 @@ class EventManager {
                 }
                 
                 if (!empty($listen)) {
-                    $this->listeners[$event][] = $listen;
+                    foreach ($event as $eve) {
+                        $this->listeners[$eve][] = $listen;
+                    }
                 }
             }
         }

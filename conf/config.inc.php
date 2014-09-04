@@ -62,6 +62,20 @@ $conf['instance_topology_pattern_colorify'] = array (
 	"/localhost/"
 );
 
+// Assigning event listeners to events/hooks. Below is a sample list of event
+// handlers. Uncomment and change this list to add in your own listeners
+//$conf['event_listeners'] = array(
+//    array(
+//        'event' => array('new_script', redeploy_script'),
+//        'class' => 'new_script',
+//        'file'  => '/foo/bar/new_script.php',
+//    ),
+//    array(
+//        'event' => 'execute_script',
+//        'class' => 'execute_script',
+//        'file'  => '/foo/bar/execute_script.php',
+//    ),
+//);
 
 // Choose how propagator gets credentials to deployment servers (MySQL, Hive, ...)
 // If empty/undefined, then user is prompted to enter credentials. These must apply on any server the user wishes
