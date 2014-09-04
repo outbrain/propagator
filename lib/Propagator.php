@@ -1,6 +1,8 @@
 <?php
 require "Loader.php";
 require "PropagatorModel.php";
+require "Event.php";
+require "EventManager.php";
 
 /**
  * class Propagator
@@ -18,6 +20,7 @@ class Propagator {
 
     private $conf;
     private $data_model;
+    private $event_manager;
     private $header_printed = false;
 
     /**
@@ -35,6 +38,7 @@ class Propagator {
 
         $this->conf = $conf;
         $this->data_model = new PropagatorModel($conf);
+        $this->event_manager = new EventManager($conf);
         
         session_start();
     }
@@ -219,6 +223,14 @@ class Propagator {
     		$propagate_script_id = $this->data_model->submit_script_for_propagation($data['script_sql_code'], $data['script_description'], $data['database_role_id'], $data['deployment_environments'], $data['script_default_schema'], $this->get_auth_user(), new Credentials($_SESSION['propagator_mysql_user'], $_SESSION['propagator_mysql_password']));
     		$data["propagate_script_id"] = $propagate_script_id;
     
+    		$this->notify_listeners("new_script", array(
+		        "script_id"   => $propagate_script_id,
+		        'schema'      => $data['script_default_schema'],
+		        'description' => $data['script_description'],
+		        'role'        => $script['database_role_id'],
+		        'user'        => $this->get_auth_user(),
+    		));
+    		
     		return $this->redirect("approve_script", "propagate_script_id=" . $propagate_script_id);
     	}
     	catch (Exception $e)
@@ -256,11 +268,20 @@ class Propagator {
     	try
     	{
     		$this->data_model->submit_script_for_propagation_on_environments($propagate_script_id, $role, $deployment_environments, $script["default_schema"], $submitter, new Credentials($_SESSION['propagator_mysql_user'], $_SESSION['propagator_mysql_password']), true);
+    		
+    		$this->notify_listeners ("redeploy_script", array(
+    		        'script_id'   => $propagate_script_id,
+    		        'schema'      => $script['default_schema'],
+    		        'description' => $script['description'],
+    		        'role'        => $script['database_role_id'],
+    		        'user'        => $this->get_auth_user(),
+    		));
+    		
     		return $this->redirect("view_script", "propagate_script_id=" . $propagate_script_id . "#instance_deployments");
     	}
     	catch (Exception $e)
     	{
-    		return $this->redirect("view_script", "propagate_script_id=" . $propagate_script_id . "&error_message=".$e->getMessage());
+    	    return $this->redirect("view_script", "propagate_script_id=" . $propagate_script_id . "&error_message=".$e->getMessage());
        	}
     }
     
@@ -295,14 +316,28 @@ class Propagator {
     	$submitter = ($this->user_is_dba() ? '' : $this->get_auth_user());
     	
     	$instances = get_var("instance");
+    	
+    	if ($deploy_action == 'approve') {
+    	    $event_name = "approve_script";
+    	} else {
+    	    $event_name = "disapprove_script";
+    	}
+    	
    		try
    		{
-    		$this->data_model->approve_propagate_script($propagate_script_id, $submitter, $instances, ($deploy_action == 'approve'));
+   		    
+   		    $this->data_model->approve_propagate_script($propagate_script_id, $submitter, $instances, ($deploy_action == 'approve'));
+   		    
+   		    $this->notify_listeners ($event_name, array(
+	            'script_id' => $propagate_script_id,
+	            'user'      => $this->get_auth_user(),
+   		    ));
+   		    
     		return $this->redirect("view_script", "propagate_script_id=".$propagate_script_id . "#instance_deployments");
    		}
    		catch (Exception $e)
    		{
-   			$data['database_roles'] = $this->data_model->get_database_roles();
+   		    $data['database_roles'] = $this->data_model->get_database_roles();
    			$this->alert($e->getMessage(), 'alert-error');
    			prettyprint($data['script_sql_code']);
    			$this->load->view("input_script", $data);
@@ -323,10 +358,16 @@ class Propagator {
 
     	try {
     		$this->data_model->execute_propagate_script_instance_deployment($propagate_script_instance_deployment_id, $force_manual, $restart_script, $run_single_query, $submitter, new Credentials($_SESSION['propagator_mysql_user'], $_SESSION['propagator_mysql_password']));
+    		
+    		$this->notify_listeners ("execute_script", array(
+		        'propagate_script_instance_deployment_id' => $propagate_script_instance_deployment_id,
+		        'user'                                    => $this->get_auth_user(),
+    		));
+    		
     		print '{"success" : true}';
     	}
     	catch(Exception $e) {
-    		print '{"success" : false, "error" : "'. addslashes($e->getMessage()).'"}';
+    	    print '{"success" : false, "error" : "'. addslashes($e->getMessage()).'"}';
     	}
     }
 
@@ -341,10 +382,17 @@ class Propagator {
     	$message = get_var('message');
     	try {
     		$this->data_model->update_propagate_script_instance_deployment_status($propagate_script_instance_deployment_id, $status, $message, $submitter);
-    	    print '{"success" : true}';
+    	    
+    		$this->notify_listeners ("mark_script", array(
+		        'propagate_script_instance_deployment_id' => $propagate_script_instance_deployment_id,
+		        'user'                                    => $this->get_auth_user(),
+		        'marked_status'                           => $status,
+    		));
+    		
+    		print '{"success" : true}';
     	}
     	catch(Exception $e) {
-    		print '{"success" : false, "error" : "'. addslashes($e->getMessage()).'"}';
+    	    print '{"success" : false, "error" : "'. addslashes($e->getMessage()).'"}';
     	}
     }
 
@@ -357,10 +405,16 @@ class Propagator {
        	$propagate_script_instance_deployment_id = get_var('propagate_script_instance_deployment_id');
     	try {
     		$this->data_model->skip_propagate_script_instance_deployment_query($propagate_script_instance_deployment_id, $submitter);
-    	    print '{"success" : true}';
+    	    
+    		$this->notify_listeners ("skip_script", array(
+		        'propagate_script_instance_deployment_id' => $propagate_script_instance_deployment_id,
+		        'user'                                    => $this->get_auth_user(),
+    		));
+    		
+    		print '{"success" : true}';
     	}
     	catch(Exception $e) {
-    		print '{"success" : false, "error" : "'. addslashes($e->getMessage()).'"}';
+    	    print '{"success" : false, "error" : "'. addslashes($e->getMessage()).'"}';
     	}
     }
 
@@ -422,11 +476,19 @@ class Propagator {
        	try
     	{
     		$this->data_model->comment_script($propagate_script_id, $script_comment, $comment_mark, $this->get_auth_user());
+    		
+    		$this->notify_listeners ("comment_script", array(
+    		        'script_id'    => $propagate_script_id,
+    		        'user'         => $this->get_auth_user(),
+    		        'comment'      => $script_comment,
+    		        'comment_mark' => $comment_mark,
+    		));
+    		
     		return $this->redirect("view_script", "propagate_script_id=" . $propagate_script_id);
     	}
     	catch (Exception $e)
     	{
-    		return $this->redirect("view_script", "propagate_script_id=" . $propagate_script_id . "&error_message=".$e->getMessage());
+    	    return $this->redirect("view_script", "propagate_script_id=" . $propagate_script_id . "&error_message=".$e->getMessage());
     	}
     }
     
@@ -723,6 +785,98 @@ class Propagator {
         return $data;
     }
 
+    /**
+     * Takes details of an event and fills in the missing details
+     * then sends the event and event details off to the event manager
+     * 
+     * @param    string    $event_name
+     * @param    array     $details
+     */
+    private function notify_listeners ($event_name, $details) {
+        $queried_info = array();
+        $script_info = array("description", "schema", "role");
+        $instances_info = array("deployment_status", "marked_status", "deployment_type", "environment", "processing_start_time", "processing_end_time", "last_message");
+        $additional_details = array("user", "comment", "comment_mark");
+        
+        // no point in doing anything if there aren't any listeners
+        if ($this->event_manager->has_listeners($event_name)) {
+            $event = array();
+            
+            // piece together information about the script
+            if (!empty($details['script_id'])) {
+                $event['script_id'] = $details['script_id'];
+                foreach ($script_info as $si) {
+                    if (!empty($details[$si])) {
+                        $event[$si] = $details[$si];
+                    } else {
+                        $queried_info = $this->data_model->get_propagate_script_and_instance_and_deployment($details['script_id']);
+                        if (!empty($queried_info[0]['propagate_script_id'])) {
+                            $event['description'] = $queried_info[0]['description'];
+                            $event['schema']      = $queried_info[0]['default_schema'];
+                            $event['role']        = $queried_info[0]['database_role_id'];
+                        }
+                        break;
+                    }
+                }
+            } elseif (!empty($details['propagate_script_instance_deployment_id'])) {
+                $queried_info = $this->data_model->get_propagate_script_and_instance_and_deployment(null, $details['propagate_script_instance_deployment_id']);
+                if (!empty($queried_info[0]['propagate_script_id'])) {
+                    $event['script_id']   = $queried_info[0]['propagator_script_id'];
+                    $event['description'] = $queried_info[0]['description'];
+                    $event['schema']      = $queried_info[0]['default_schema'];
+                    $event['role']        = $queried_info[0]['database_role_id'];
+                }
+            }
+            
+            // piece together information about the instances
+            if (empty($details['instances'])) {
+                if (empty($queried_info[0]['propagate_script_id'])) {
+                    if (!empty($details['script_id'])) {
+                        $queried_info = $this->data_model->get_propagate_script_and_instance_and_deployment($details['script_id']);
+                    } elseif (!empty($details['propagate_script_instance_deployment_id'])) {
+                        $queried_info = $this->data_model->get_propagate_script_and_instance_and_deployment(null, $details['propagate_script_instance_deployment_id']);
+                    }
+                }
+
+                if (!empty($queried_info[0]['propagate_script_id'])) {
+                    foreach ($queried_info as $int) {
+                        $marked_status = null;
+                        if (!empty($details['marked_status'])) {
+                            $marked_status = $details['marked_status'];
+                        }
+                        $event['instances'][$int['environment']] = array(
+                            "deployment_status"     => $int['deployment_status'],
+                            "marked_status"         => $marked_status,
+                            "deployment_type"       => $int['deployment_type'],
+                            "environment"           => $int['environment'],
+                            "processing_start_time" => $int['processing_start_time'],
+                            "processing_end_time"   => $int['processing_end_time'],
+                            "last_message"          => $int['last_message'],
+                        );
+                    }
+                }
+            } else {
+                $event['instances'] = $details['instances'];
+                if (!empty($details['marked_status'])) {
+                    foreach ($event['instances'] as $key => $value) {
+                        $event['instances'][$key]['marked_status'] = $details['marked_status'];
+                    }
+                }
+            }
+            
+            // grab any additional details
+            foreach ($additional_details as $ai) {
+                if (!empty($details[$ai])) {
+                    $event[$ai] = $details[$ai];
+                }
+            }
+            
+            // notify the listeners
+            if (!empty($event)) {
+                $this->event_manager->notify($event_name, new Event($event));
+            }
+        }
+    }
 }
 
 ?>
