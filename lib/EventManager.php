@@ -81,7 +81,7 @@ class EventManager {
             
             if (!empty($event)) {
                 if (!empty($listener['class'])) {
-                    if (!empty($listener['file']) && file_exists($listener['file'])) {
+                    if (!empty($listener['file']) && $this->event_file_exists($listener['file'])) {
                         $listen['file'] = $listener['file'];
                         $listen['class'] = $listener['class'];
                     }
@@ -93,6 +93,33 @@ class EventManager {
                     }
                 }
             }
+        }
+    }
+    
+    /**
+     * Alternative to file_exists that takes include_path
+     * into consideration
+     * 
+     * @param    string    $file    Filename (with or without path. relative or full).
+     */
+    private function event_file_exists ($file) {
+        if (function_exists('stream_resolve_include_path')) {
+            return (stream_resolve_include_path($file) !== false);
+        } else {
+            if (file_exists($file)) {
+                return true;
+            }
+            
+            $paths = PATH_SEPARATOR == ':' ? preg_split('#(?<!phar):#', get_include_path()) : explode(PATH_SEPARATOR, get_include_path());
+            foreach ($paths as $p) {
+                $file_and_path = $prefix . "/" . $file;
+                
+                if (file_exists($file_and_path)) {
+                    return true;
+                }
+            }
+            
+            return false;
         }
     }
 }

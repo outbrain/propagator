@@ -121,7 +121,7 @@ class Event {
      * @return boolean
      */
     public function propagation_stopped() {
-        return $this->propagate;
+        return ($this->propagate === false);
     }
 }
 

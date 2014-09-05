@@ -40,6 +40,38 @@ $conf['two_step_approval_environments'] = array(
 
 $conf['history_visible_to_all'] = true;
 
+/*
+ * Event listeners to test with
+ */
+$conf['event_listeners'] = array(
+    array(
+        'event' => array('new_script', 'approve_script', 'comment_script'),
+        'class' => 'DumpListener',
+        'file'  => './Tests/lib/listeners/DumpListener.php',
+    ),
+    array(
+        'event' => 'approve_script',
+        'class' => 'DumpAndStopListener',
+        'file'  => './Tests/lib/listeners/DumpAndStopListener.php'
+    ),
+    array(
+        'event' => 'approve_script',
+        'class' => 'DumpListener',
+        'file'  => './Tests/lib/listeners/DumpListener.php'
+    ),
+    array(
+        'event' => 'mark_script',
+        'class' => 'DumpListener',
+        'file'  => './Tests/lib/listeners/DumpListener.php',        
+    ),
+    array(
+        'event' => 'redeploy_script',
+        'class' => 'BogusListener',
+        'file'  => '/foo/BogusListener.php',
+    ),
+);
+
+
 // dump like this:
 // ./my sqldump propagator --no-data | egrep -v "[/][*]" | egrep -v "\-\-" | sed -r -e "s/AUTO_INCREMENT=([0-9])+ //g"
 //
