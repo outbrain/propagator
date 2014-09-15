@@ -68,12 +68,12 @@ $conf['instance_topology_pattern_colorify'] = array (
 //    array(
 //        'event' => array('new_script', redeploy_script'),
 //        'class' => 'new_script',
-//        'file'  => '/foo/bar/new_script.php',
+//        'file'  => 'new_script.php',
 //    ),
 //    array(
 //        'event' => 'execute_script',
 //        'class' => 'execute_script',
-//        'file'  => '/foo/bar/execute_script.php',
+//        'file'  => 'execute_script.php',
 //    ),
 //);
 
