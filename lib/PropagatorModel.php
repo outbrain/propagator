@@ -797,6 +797,26 @@ class PropagatorModel {
     		ORDER BY
     			mapping_type
     		")->fetchAll();
+    	// HAHA, you thought things were that simple?
+    	// MySQL has a notorious mixing of data & metadata. One aspect is the GRANT command, which
+    	// can apply on a given schema, e.g. GRANT SELECT ON `my_schema`.* TO 'some_user'@'some_host'.
+    	// We actually want our schema mapping to take over this type of queries!
+    	// So we inject query mappings based on existing schema mappings.
+    	$base_regex_search = "/^([\s]*grant[\s]+.*[\s]+on[\s]+)[`]?FROM_SCHEMA_PLACEHOLDER[`]?[.]/i";
+    	$base_regex_replace = "$1`TO_SCHEMA_PLACEHOLDER`.";
+    	$database_instance_schema_mapping = $this->get_database_instance_schema_mapping($database_instance_id);
+    	foreach($database_instance_schema_mapping as $mapping) {
+    		$new_mapping_regex_search = str_replace("FROM_SCHEMA_PLACEHOLDER", $mapping["from_schema"], $base_regex_search);
+    		$new_mapping_regex_replace = str_replace("TO_SCHEMA_PLACEHOLDER", $mapping["to_schema"], $base_regex_replace);
+    		
+    		$new_mapping = array (
+    				"mapping_type"	=> "regex",
+    				"mapping_key"	=> $new_mapping_regex_search,
+    				"mapping_value" => $new_mapping_regex_replace
+    		);
+    		array_push($datas, $new_mapping);
+    	}
+    	
     	return $datas;
     }
 
