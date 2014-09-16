@@ -44,6 +44,10 @@ class Propagator {
     }
 
     
+    private function get_credentials() {
+    	return new Credentials($_SESSION['propagator_mysql_user'], $_SESSION['propagator_mysql_password']);
+    }
+    
     private function redirect($page, $params = "") {
     	$redirect_url = site_url() . "?action=" . $page;
     	if (!empty($params))
@@ -122,6 +126,9 @@ class Propagator {
     	$data['propagator_mysql_password'] = get_var('password');
     
     	try {
+    	    if ($this->conf['restrict_credentials_input_to_dbas'] && !$this->user_is_dba()) {
+    			throw new Exception("Unauthorized: only DBAs can input credentials");
+    		}
     		$this->data_model->verify_mysql_credentials($data['propagator_mysql_user'], $data['propagator_mysql_password']);
     		print '{"success" : true}';
     	}
@@ -139,6 +146,9 @@ class Propagator {
     
     public function set_credentials()
     {
+        if ($this->conf['restrict_credentials_input_to_dbas'] && !$this->user_is_dba()) {
+    		throw new Exception("Unauthorized: only DBAs can input credentials");
+    	}
     	$data['propagator_mysql_user'] = get_var('propagator_mysql_user');
     	$data['propagator_mysql_password'] = get_var('propagator_mysql_password');
     	$data['ajax'] = get_var('ajax');
@@ -220,7 +230,7 @@ class Propagator {
     
     	try
     	{
-    		$propagate_script_id = $this->data_model->submit_script_for_propagation($data['script_sql_code'], $data['script_description'], $data['database_role_id'], $data['deployment_environments'], $data['script_default_schema'], $this->get_auth_user(), new Credentials($_SESSION['propagator_mysql_user'], $_SESSION['propagator_mysql_password']));
+    		$propagate_script_id = $this->data_model->submit_script_for_propagation($data['script_sql_code'], $data['script_description'], $data['database_role_id'], $data['deployment_environments'], $data['script_default_schema'], $this->get_auth_user(), $this->get_credentials());
     		$data["propagate_script_id"] = $propagate_script_id;
     
     		$this->notify_listeners("new_script", array(
@@ -267,7 +277,7 @@ class Propagator {
     	$role = $this->data_model->get_database_role($script['database_role_id']);
     	try
     	{
-    		$this->data_model->submit_script_for_propagation_on_environments($propagate_script_id, $role, $deployment_environments, $script["default_schema"], $submitter, new Credentials($_SESSION['propagator_mysql_user'], $_SESSION['propagator_mysql_password']), true);
+    		$this->data_model->submit_script_for_propagation_on_environments($propagate_script_id, $role, $deployment_environments, $script["default_schema"], $submitter, $this->get_credentials(), true);
     		
     		$this->notify_listeners ("redeploy_script", array(
     		        'script_id'   => $propagate_script_id,
@@ -357,7 +367,7 @@ class Propagator {
      	$run_single_query = (get_var('run_single_query') == 'true'? true : false);
 
     	try {
-    		$this->data_model->execute_propagate_script_instance_deployment($propagate_script_instance_deployment_id, $force_manual, $restart_script, $run_single_query, $submitter, new Credentials($_SESSION['propagator_mysql_user'], $_SESSION['propagator_mysql_password']));
+    		$this->data_model->execute_propagate_script_instance_deployment($propagate_script_instance_deployment_id, $force_manual, $restart_script, $run_single_query, $submitter, $this->get_credentials());
     		
     		$this->notify_listeners ("execute_script", array(
 		        'propagate_script_instance_deployment_id' => $propagate_script_instance_deployment_id,
@@ -475,7 +485,7 @@ class Propagator {
     	 
        	try
     	{
-    		$this->data_model->comment_script($propagate_script_id, $script_comment, $comment_mark, $this->get_auth_user());
+    		$this->data_model->comment_script($propagate_script_id, $script_comment, $comment_mark, $this->get_auth_user(), $submitter);
     		
     		$this->notify_listeners ("comment_script", array(
     		        'script_id'    => $propagate_script_id,
@@ -495,12 +505,16 @@ class Propagator {
 
     public function propagate_script_history() {
        	$submitter = get_var('submitter');
-    	if (!$this->user_is_dba() && !$this->conf['history_visible_to_all']) {
+        if ($submitter == ":me:") {
+    		$submitter = $this->get_auth_user();
+    	}
+       	if (!$this->user_is_dba() && !$this->conf['history_visible_to_all']) {
     		$submitter = $this->get_auth_user();
     	}
     	$script_fragment = get_var('script_fragment');
     	$database_role_id = get_var('database_role_id');
     	$default_schema = get_var('default_schema');
+    	$filter = get_var('filter');
     	$page = (int)get_var('page');
     	if (empty($page)) {
     		$page = 0;
@@ -509,11 +523,12 @@ class Propagator {
     		$page = 0;
     	}
     	 
-    	$data["propagate_scripts"] = $this->data_model->get_propagate_script_history($page, $submitter, $script_fragment, $database_role_id, $default_schema);
+    	$data["propagate_scripts"] = $this->data_model->get_propagate_script_history($page, $submitter, $script_fragment, $database_role_id, $default_schema, $filter);
     	$data["submitter"] = $submitter;
     	$data["script_fragment"] = $script_fragment;
     	$data["database_role_id"] = $database_role_id;
     	$data["default_schema"] = $default_schema;
+    	$data["filter"] = $filter;
     	$data["page"] = $page;
     	$data["has_previous_page"] = ($page > 0);
     	$data["has_next_page"] = (count($data["propagate_scripts"]) >= $this->data_model->pagination_page_size);
@@ -589,7 +604,27 @@ class Propagator {
    		}
     }
 
-
+    public function compare_database_role() {
+    	if (!$this->user_is_dba()) {
+    		throw new Exception("Unauthorized");
+    	}
+    	
+    	$data = $this->header();
+    
+    	$data['database_role_id'] = get_var('database_role_id');
+    
+    	$data['database_role'] = $this->data_model->get_database_role($data['database_role_id']);
+    	$data['instances'] = $this->data_model->get_instances_by_role($data['database_role_id']);
+    	$data['instances_compact'] = implode("\n", array_map(function($instance) { return $instance['host'].":".$instance['port']; }, $data['instances']));
+    	$data['assigned_instance_ids'] = array_map(function($instance) { return $instance['database_instance_id']; }, $data['instances']);
+    
+    	$data['query_mappings'] = safe_presentation_query_mappings($this->data_model->get_database_role_query_mapping($data['database_role_id']));
+    
+    	$this->load->view("compare_database_role", $data);
+    	$this->footer();
+    }
+    
+    
     public function database_instances() {
     	$this->header();
 
@@ -613,6 +648,7 @@ class Propagator {
     	$data['schema_mappings'] = $this->data_model->get_database_instance_schema_mapping($data['database_instance_id']);
     	$data['query_mappings'] = safe_presentation_query_mappings($this->data_model->get_database_instance_query_mapping($data['database_instance_id']));
     	$data['instance_deployments_history'] = $this->data_model->get_instance_deployments_history($data['database_instance_id'], $submitter);
+    	$data['pending_instance_deployments_history'] = $this->data_model->get_pending_instance_deployments_history($data['database_instance_id']);
     	$data['is_dba'] = $this->user_is_dba();
     	$data['deployment_actions_available'] = false;
     	 
@@ -696,6 +732,31 @@ class Propagator {
     }
     
 
+
+    public function database_instances_diff() {
+    	if (!$this->user_is_dba()) {
+    		return $this->redirect("splash");
+    	}
+    	$submitter = ($this->user_is_dba() ? '' : $this->get_auth_user());
+    	 
+    	$this->header();
+    
+    	$data['database_instance_id_src'] = get_var('database_instance_id_src');
+    	$data['database_instance_id_dst'] = get_var('database_instance_id_dst');
+    	$data['schema'] = get_var('schema');
+    	$data['has_credentials'] = $this->has_credentials();
+    	 
+    	$data['database_instance_src'] = $this->data_model->get_database_instance($data['database_instance_id_src']);
+    	$data['database_instance_dst'] = $this->data_model->get_database_instance($data['database_instance_id_dst']);
+    	$exec_result = $this->data_model->get_database_instances_diff($data['database_instance_src'], $data['database_instance_dst'], $data['schema'], $this->get_credentials());
+    	
+    	$data['instances_diff'] = implode("\n", $exec_result);
+    	 
+    	$this->load->view("database_instances_diff", $data);
+    	$this->footer();
+    }
+    
+    
 
     public function mappings() {
     	$this->header();

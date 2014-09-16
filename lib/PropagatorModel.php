@@ -54,8 +54,14 @@ class PropagatorModel {
     function error_result($message) {
     	return array('error' => $message);
     }
-    
 
+    function get_conf_param($param_name, $default_value) {
+    	if(array_key_exists($param_name, $this->conf) && $this->conf[$param_name]) {
+    		return $this->conf[$param_name];
+    	}
+    	return $default_value;
+    }
+    
     function submit_script_for_propagation($script_sql_code, $script_description, $database_role, $deployment_environments, $default_schema, $auth_user, $credentials) {
     	$script_sql_code = trim($script_sql_code);
         if (empty($database_role)) {
@@ -248,17 +254,32 @@ class PropagatorModel {
     	$this->get_database()->delete("propagate_script_instance_deployment", $where_conditions);
     }
 
-    function comment_script($propagate_script_id, $script_comment, $comment_mark, $submitter) {
+    function comment_script($propagate_script_id, $script_comment, $comment_mark, $auth_user, $submitter) {
     	$script_comment = trim($script_comment);
     	if (!$script_comment) {
     		throw new Exception("Comment must not be empty");
     	}
     	$this->get_database()->insert("propagate_script_comment", array(
     			"propagate_script_id" => $propagate_script_id,
-    			"submitted_by" => $submitter,
+    			"submitted_by" => $auth_user,
     			"comment_mark" => $comment_mark,
     			"comment" => $script_comment
     	));
+    	if ($comment_mark == "cancelled") {
+    		$submitter = (empty($submitter) ? '%' : $submitter);
+    		$this->get_database()->query("
+				UPDATE
+					propagate_script_instance_deployment
+				SET 
+					deployment_status = 'disapproved',
+	                manual_approved = 0,
+					last_message = 'disapproved due to cancelled mark'
+				WHERE
+					propagate_script_id = ".$this->get_database()->quote($propagate_script_id)."
+					AND deployment_status IN ('awaiting_approval', 'not_started', 'awaiting_guinea_pig', 'awaiting_dba_approval')
+					AND submitted_by LIKE ".$this->get_database()->quote($submitter)."				
+    		");
+    	}
     }
     
     function get_database_role($database_role_id) {
@@ -450,14 +471,39 @@ class PropagatorModel {
    	    ");
     }
 
-
     function get_database_instance_topology($database_instance, $username, $password) {
     	$host = $database_instance ['host'];
     	$port = $database_instance ['port'];
-    	$process_command = "pt-slave-find --recursion-method=processlist,hosts --report-format=hostname h=$host,P=$port,u=$username,p=$password";
+    	$pt_slave_find = $this->get_conf_param('pt-slave-find', 'pt-slave-find');
+    	$process_command = $pt_slave_find." --recursion-method=processlist,hosts --report-format=hostname h=$host,P=$port,u=$username,p=$password";
     	exec($process_command, $exec_output, $exec_return_code);
-    	
+    
     	$exec_output = convert_ips_to_hostnames($exec_output);
+    
+    	return $exec_output;
+    }
+    
+
+    function get_database_instances_diff($database_instance_src, $database_instance_dst, $schema, $credentials) {
+    	$host_src = $database_instance_src['host'];
+    	$port_src = $database_instance_src['port'];
+		$schema_src = $this->get_computed_database_instance_mapped_schemas(null, $database_instance_src, $schema, $credentials);
+		$schema_src = $schema_src[0];
+    	$host_dst = $database_instance_dst['host'];
+    	$port_dst = $database_instance_dst['port'];
+		$schema_dst = $this->get_computed_database_instance_mapped_schemas(null, $database_instance_dst, $schema, $credentials);
+		$schema_dst = $schema_dst[0];
+		
+		$username = $credentials->get_username();
+		$password = $credentials->get_password();
+		
+    	$mysqldiff = $this->get_conf_param('mysqldiff', 'mysqldiff');
+    	$process_command = $mysqldiff." --server1=$username:$password@$host_src:$port_src --server2=$username:$password@$host_dst:$port_dst $schema_src:$schema_dst";
+		error_log("host: $host_src");
+		error_log("schema: $schema_src");
+		error_log("processcommand: $process_command");
+		
+    	exec($process_command, $exec_output, $exec_return_code);
     	
     	return $exec_output;
     }
@@ -607,10 +653,17 @@ class PropagatorModel {
                     $mapped_schemas[] = $mapping["to_schema"];
                 }
                 else {
-                    // Wildcard mapping
-                    if ($credentials->is_empty()) {
-                        throw new Exception("Wildcard mapping found, but no credentials available");
-                    }
+					// Wildcard mapping
+					$instance_credentials = $credentials;
+					if ($instance_credentials->is_empty() && empty($this->instance_credentials)) {
+						throw new Exception( "Wildcard mapping found, but no credentials available" );
+					}
+					if ($instance_credentials->is_empty() && $this->instance_credentials) {
+						$stored_credentials = $this->get_instance_credentials($instance['host'], $instance['port'] );
+						if ($stored_credentials) {
+							$instance_credentials = $stored_credentials;
+						}
+					}
                     // Connect to remote database and find databases (schemas) matching wildcard
 
                     //~~~
@@ -619,8 +672,8 @@ class PropagatorModel {
                             'default_schema' => '',
                             'host' => $instance['host'],
                             'port' => $instance['port'],
-                            'user' => $credentials->get_username(),
-                            'password' => $credentials->get_password()
+                            'user' => $instance_credentials->get_username(),
+                            'password' => $instance_credentials->get_password()
     	        	));
     	        	$schemas = $database_wrapper->get_schemas_like($mapping["to_schema"]);
     	        	foreach($schemas as $schema) {
@@ -744,6 +797,26 @@ class PropagatorModel {
     		ORDER BY
     			mapping_type
     		")->fetchAll();
+    	// HAHA, you thought things were that simple?
+    	// MySQL has a notorious mixing of data & metadata. One aspect is the GRANT command, which
+    	// can apply on a given schema, e.g. GRANT SELECT ON `my_schema`.* TO 'some_user'@'some_host'.
+    	// We actually want our schema mapping to take over this type of queries!
+    	// So we inject query mappings based on existing schema mappings.
+    	$base_regex_search = "/^([\s]*grant[\s]+.*[\s]+on[\s]+)[`]?FROM_SCHEMA_PLACEHOLDER[`]?[.]/i";
+    	$base_regex_replace = "$1`TO_SCHEMA_PLACEHOLDER`.";
+    	$database_instance_schema_mapping = $this->get_database_instance_schema_mapping($database_instance_id);
+    	foreach($database_instance_schema_mapping as $mapping) {
+    		$new_mapping_regex_search = str_replace("FROM_SCHEMA_PLACEHOLDER", $mapping["from_schema"], $base_regex_search);
+    		$new_mapping_regex_replace = str_replace("TO_SCHEMA_PLACEHOLDER", $mapping["to_schema"], $base_regex_replace);
+    		
+    		$new_mapping = array (
+    				"mapping_type"	=> "regex",
+    				"mapping_key"	=> $new_mapping_regex_search,
+    				"mapping_value" => $new_mapping_regex_replace
+    		);
+    		array_push($datas, $new_mapping);
+    	}
+    	
     	return $datas;
     }
 
@@ -773,6 +846,18 @@ class PropagatorModel {
      * @throws Exception
      */
     public function execute_propagate_script_instance_deployment($propagate_script_instance_deployment_id, $force_manual, $restart_script, $run_single_query, $submitter, $credentials) {
+		if ($force_manual) {
+			$submitter_mask = (empty($submitter) ? '%' : $submitter);
+			$this->get_database()->query("
+	    			UPDATE 
+	    				propagate_script_instance_deployment 
+	    			SET 
+	    				manual_approved=1 
+	    			WHERE 
+	    				propagate_script_instance_deployment_id = " . $this->get_database()->quote($propagate_script_instance_deployment_id) . " 
+	    				AND submitted_by LIKE ".$this->get_database()->quote($submitter_mask)."
+	    			");
+    	}
     	$datas = $this->get_database()->query("
     		SELECT
     			*
@@ -799,8 +884,8 @@ class PropagatorModel {
     			return;
 			}
     	}
-    	if ($propagate_script_instance_deployment['deployment_type'] == 'manual' && !$force_manual) {
-    		// Do nothing: this is a manual deployment.
+    	if ($propagate_script_instance_deployment['deployment_type'] == 'manual' && !$propagate_script_instance_deployment['manual_approved']) {
+    		// Do nothing: this is a manual deployment, and force_manual was not provided.
     		return;
     	}
     	 
@@ -1084,7 +1169,7 @@ class PropagatorModel {
 	}
 	
 
-    function get_propagate_script_history($page, $submitter, $script_fragment, $database_role_id, $database_schema){
+    function get_propagate_script_history($page, $submitter, $script_fragment, $database_role_id, $database_schema, $filter) {
     	if(empty($page)) {
     		$page = 0 ;
     	}
@@ -1121,6 +1206,10 @@ class PropagatorModel {
 	    		AND
 			";
     	}
+    	$having_condition = "";
+    	if ($filter == "incomplete") {
+    		$having_condition = "HAVING count_deployment_servers > count_deployment_servers_passed + count_deployment_servers_failed";
+    	}
     	$datas = $this->get_database()->query("
     		select
     			propagate_script.*,
@@ -1139,6 +1228,7 @@ class PropagatorModel {
     			)
        		GROUP BY
     			propagate_script_id
+    		$having_condition
     		ORDER BY
     			propagate_script.submitted_at DESC,
     			propagate_script.propagate_script_id DESC
@@ -1338,7 +1428,7 @@ class PropagatorModel {
     	return $datas;
     }
     
-    
+
     function get_instance_deployments_history($database_instance_id, $submitter) {
     	if(empty($submitter)) {
     		$submitter = '%';
@@ -1362,9 +1452,35 @@ class PropagatorModel {
     		LIMIT 100
     		")->fetchAll();
     	return $datas;
-	}
+    }
     
 
+    function get_pending_instance_deployments_history($database_instance_id, $submitter) {
+    	if(empty($submitter)) {
+    		$submitter = '%';
+    	}
+    	$datas = $this->get_database()->query("
+    		select
+    			propagate_script_instance_deployment.*,
+    			database_instance.*,
+    			TRUE AS action_enabled
+    		FROM
+    			database_instance
+    			JOIN propagate_script_instance_deployment USING(database_instance_id)
+    			JOIN propagate_script USING(propagate_script_id)
+    		WHERE
+    			database_instance_id = ".$this->get_database()->quote($database_instance_id)."
+    			AND deployment_status NOT IN ('disapproved', 'passed', 'deployed_manually')
+    		ORDER BY
+    			propagate_script_id DESC,
+				is_guinea_pig DESC,
+    			deployment_type ASC,
+    			propagate_script_instance_deployment_id
+    		")->fetchAll();
+    	return $datas;
+    }
+    
+    
 	function get_propagate_script_comments($propagate_script_id, $submitter) {
 		if(empty($submitter)) {
 			$submitter = '%';

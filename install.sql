@@ -21,7 +21,7 @@ CREATE TABLE `database_instance` (
 PRIMARY KEY (`database_instance_id`),
 UNIQUE KEY `host_port_uidx` (`host`,`port`),
 KEY `type_idx` (`environment`)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE `database_instance_query_mapping` (
@@ -43,7 +43,7 @@ PRIMARY KEY (`database_instance_id`,`database_role_id`),
 KEY `role_idx` (`database_role_id`),
 CONSTRAINT `instance_role_database_instance_id_fk` FOREIGN KEY (`database_instance_id`) REFERENCES `database_instance` (`database_instance_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
 CONSTRAINT `instance_role_database_role_id_fk` FOREIGN KEY (`database_role_id`) REFERENCES `database_role` (`database_role_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE `database_instance_schema_mapping` (
@@ -64,7 +64,7 @@ CREATE TABLE `database_role` (
 `description` varchar(1024) CHARACTER SET utf8 DEFAULT NULL,
 `is_default` tinyint(3) unsigned DEFAULT '0',
 PRIMARY KEY (`database_role_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE `database_role_query_mapping` (
@@ -112,7 +112,7 @@ KEY `submitted_by_at_idx` (`submitted_by`,`submitted_at`),
 KEY `script_database_role_id_fk` (`database_role_id`),
 KEY `checksum_idx` (`checksum`),
 CONSTRAINT `script_database_role_id_fk` FOREIGN KEY (`database_role_id`) REFERENCES `database_role` (`database_role_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE `propagate_script_comment` (
@@ -126,7 +126,7 @@ PRIMARY KEY (`propagate_script_comment_id`),
 KEY `propagate_script_submitted_at_idx` (`propagate_script_id`,`submitted_at`),
 KEY `submitted_by_at_idx` (`submitted_by`,`submitted_at`),
 CONSTRAINT `comment_propagate_script_id_fk` FOREIGN KEY (`propagate_script_id`) REFERENCES `propagate_script` (`propagate_script_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE `propagate_script_deployment` (
@@ -167,7 +167,7 @@ CONSTRAINT `instance_deployment_current_propagate_script_query_id` FOREIGN KEY (
 CONSTRAINT `instance_deployment_database_instance_id_fk` FOREIGN KEY (`database_instance_id`) REFERENCES `database_instance` (`database_instance_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
 CONSTRAINT `instance_deployment_propagate_script_deployment_id_fk` FOREIGN KEY (`propagate_script_deployment_id`) REFERENCES `propagate_script_deployment` (`propagate_script_deployment_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
 CONSTRAINT `instance_deployment_propagate_script_id_fk` FOREIGN KEY (`propagate_script_id`) REFERENCES `propagate_script` (`propagate_script_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE `propagate_script_query` (
@@ -177,4 +177,4 @@ CREATE TABLE `propagate_script_query` (
 PRIMARY KEY (`propagate_script_query_id`),
 KEY `propagate_script_idx` (`propagate_script_id`),
 CONSTRAINT `query_propagate_script_id_fk` FOREIGN KEY (`propagate_script_id`) REFERENCES `propagate_script` (`propagate_script_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -653,6 +653,8 @@ Reason for including an external file is that it can be placed in a more
 restricted directory, with stricter access (e.g. `chown apache:root ...`,
 `chmod 600 ...`).
 
+
+
 ##### Notes
 
 When working in persistent-credentials mode _Propagator_ simply assumes all
@@ -672,6 +674,12 @@ typically limit the privileges for the persistent credentials (do you really
 have to have `SUPER` or `RELOAD` MySQL privileges for automated deployments?).
 Nevertheless a DBA with super-user privileges may set her privileges in
 session, and gain more power over deployments.
+
+A configuration variable controls whether normal users are indeed allowed to enter their own credentials
+(this is the default). One may disallow this, and only permit DBAs to enter their own credentials.
+Edit `conf/config.inc.php` to read:
+
+    $conf['restrict_credentials_input_to_dbas'] = true;
 
 ### Advanced DBA actions
 

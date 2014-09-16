@@ -111,19 +111,37 @@
 
 <script lang="JavaScript">
 	$(document).ready(function()  {
+
+		var databaseRoles = {
+			<?php foreach ($database_roles as $role)  { ?>
+				"<?php echo $role['database_role_id'] ?>" : <?php echo $role['has_schema'] ?>, 
+			<?php } ?>
+		};
 		function reviewDatabaseRole() {
-			var database_role_valid = false;
-			$('[data-type="database_role"][data-value="'+$("#database_role_id").val()+'"]').each(function() {
-                database_role_valid = true;
-            });
-            if (!database_role_valid) {
-                alert("Unknown database role");
-            }
-            return database_role_valid;
+			if (databaseRoles[$("#database_role_id").val()] >= 0) {
+				return true;
+			}
+            alert("Unknown database role");
+			return false;
 		}
 
+		function currentRoleMayRequireSchema() {
+			return (databaseRoles[$("#database_role_id").val()] == 1);
+		}
+
+		function checkIfSchemaInputCanBeDisabled() {
+			if (currentRoleMayRequireSchema()) {
+				$('#script_default_schema').removeAttr('disabled');
+			} else {
+				$('#script_default_schema').attr('disabled','disabled');
+			} 
+		}
+		$("#database_role_id").on('input propertychange paste', function() {
+			checkIfSchemaInputCanBeDisabled();
+		});
+		
 		function reviewSchemaNameSubmission() {
-			if ($("#script_default_schema").val() == '') {
+			if ($("#script_default_schema").val() == '' && currentRoleMayRequireSchema()) {
 				bootbox.confirm("You have not submitted a schema name.<p>This is allowed, but discouraged: you may wish to strip schema name from script code and specify the schema in its dedicated box.<p>Please confirm you with to proceed anyhow", function(confirm_result) {
 					if (confirm_result) {
 						checkIfScriptAlreadyExists();
@@ -137,7 +155,6 @@
 		}
 
 		function checkIfScriptAlreadyExists() {
-		    var script_is_valid = false;
 			$.post("index.php", {action: "check_for_existing_script", script_sql_code: $("#script_sql_code").val()}, function(check_result) {
 					if(check_result.script_exists) {
 						bootbox.confirm(
@@ -157,9 +174,15 @@
 		}
 		
 		function submitScriptForm() {
+			if (!currentRoleMayRequireSchema()) {
+				$('#script_default_schema').removeAttr('disabled');
+				$("#script_default_schema").val("");
+			}
 			$("#input_script_form").submit();
 		}
-		
+
+		$("#script_sql_code").on('input propertychange paste', function() {
+		});
 		$("#input_script_form_submit").click(function() {
 		    if (!reviewDatabaseRole())
 		        return false;
@@ -169,9 +192,12 @@
 		
 		$('[data-type="database_role"]').click(function() {
 			$("#database_role_id").val($(this).attr("data-value"));
+			checkIfSchemaInputCanBeDisabled();
 		});
 		$('[data-type="known_schema"]').click(function() {
 			$("#script_default_schema").val($(this).attr("data-value"));
 		});
+
+		checkIfSchemaInputCanBeDisabled();
 });
 </script>

@@ -29,6 +29,7 @@ $conf['default_login'] = 'gromit';
 // Accounts with DBA privileges: mark deployments as "manually deployed", restart deployments, view topologies
 $conf['dbas'] = array('gromit', 'penguin');
 $conf['blocked'] = array('badboy');
+$conf['restrict_credentials_input_to_dbas'] = true;
 
 // By default production deployments are 'manual', such that the user has to explicitly click the "reload" button
 // so as to deploy. Change to 'automatic' in you have great faith
@@ -79,6 +80,12 @@ $conf['instance_topology_pattern_colorify'] = array (
 //        'file'  => 'execute_script.php',
 //    ),
 //);
+
+$conf['pt-slave-find'] = '';
+
+$conf['mysqldiff'] = '/home/snoach/dev/outbrain/trunk/production/tools/mysql-utilities/mysqldiff --difftype=sql --force --changes-for=server2 --skip-table-options ';
+
+
 
 // Choose how propagator gets credentials to deployment servers (MySQL, Hive, ...)
 // If empty/undefined, then user is prompted to enter credentials. These must apply on any server the user wishes

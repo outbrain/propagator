@@ -83,16 +83,50 @@
 	</div>
 <?php } ?>
 
-<?php {
-	$this->view('view_script_instance_deployments', array(
-		"is_dba" => $is_dba,
-		"script" => null,
-		"approve_script_mode" => false,
-		"propagate_script_instance_deployments" => $instance_deployments_history
-		)
-	);
-} ?>
-
+<div style="margin: 20px">
+	<ul id="deployments_tabs" class="nav nav-tabs">
+        <li class="active"><a href="#recent_deployments_tab" data-toggle="tab"><span class="glyphicon glyphicon-th-list"></span> History</a></li>
+        <li><a href="#pending_deployments_tab" data-toggle="tab"><span class="glyphicon glyphicon-flag"></span> Pending</a></li>
+    </ul>
+</div>
+    
+<div class="tab-content">
+    <div class="tab-pane active" id="recent_deployments_tab">
+		<?php {
+			$this->view('view_script_instance_deployments', array(
+				"is_dba" => $is_dba,
+				"script" => null,
+				"approve_script_mode" => false,
+				"propagate_script_instance_deployments" => $instance_deployments_history
+				)
+			);
+		} ?>
+	</div>
+	<div class="tab-pane" id="pending_deployments_tab">
+		<form action="index.php" method="GET" class="form-inline" name="approve_instance_deployments_form" id="approve_instance_deployments_form">
+			<input type="hidden" name="action" value="approve_instance_deployments">
+			<input type="hidden" name="deploy_action" value="approve">
+			<span id="propagate_script_instance_deployments">
+				<?php {
+						$this->view('view_script_instance_deployments', array(
+							"is_dba" => $is_dba,
+							"script" => null,
+							"approve_script_mode" => false,
+							"deployment_actions_available" => true,
+							"propagate_script_instance_deployments" => $pending_instance_deployments_history
+							)
+						);
+					} ?>
+			</span>
+			<div id="approve_script_form_submit_container">
+				<center>
+					<button class="btn btn-primary btn-small" type="button" id="approve_script_form_approve_button"/>Approve</button>
+					<input class="btn-small alert-error" type="submit" value="Disapprove" name="disapprove" id="approve_script_form_disapprove_button"/>
+				</center>
+			</div>
+		</form>
+	</div>
+</div>
 
 <?php if($is_dba) {?>
     <div style="margin: 20px">
@@ -155,11 +189,21 @@
 
 <script lang="JavaScript">
 	$(document).ready(function() {
-		$(":checkbox").attr("disabled", true).prop("checked", false);
+		$("#recent_deployments_tab :checkbox").attr("disabled", true).prop("checked", false);
         $(".chosen-select").chosen({
             placeholder_text_multiple: "Choose roles",
             width: "480px"
         });
+    	
+    	$("input.all_deployment_instances").live("click", function() {
+    		var is_checked = this.checked;
+    	    $(this).closest("form").find("input[name='instance[]']").each(function(index) {
+    	    	if (!$(this).is(":disabled")) {
+    		    	$(this).prop("checked", is_checked);
+    	    	}
+    		});
+    	});            
+            
 	});
 </script>
 
