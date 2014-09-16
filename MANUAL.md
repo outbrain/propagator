@@ -861,11 +861,12 @@ was available/applicable to the event.
 | instances    | An associative array of each environment that was affected by the event. Each instance in the array can have the following keys that further describe the status of the environment after the event has occurred: "environment", "deployment_status", "marked_status", "deployment_type", "processing_start_time", "processing_end_time", "last_message" |
 
 
-Listeners live in the listeners directory that is apart of propagator's file tree.
-To register your listener, you will need to add it to `conf/config.inc.php` under
-`$conf['event_listeners']`. A listener can be registered for multiple events or
-just one. Below are examples of a listener registered for multiple events followed
-by a listener registered for just one.
+Listeners live in the listeners directory that is apart of propagator's file tree. Or
+you can change the location of the listeners directory by changing the value of 
+`$conf['event_listener_dir']`. To register your listener, you will need to add it 
+to `conf/config.inc.php` under `$conf['event_listeners']`. A listener can be 
+registered for multiple events or just one. Below are examples of a listener 
+registered for multiple events followed by a listener registered for just one.
 
     $conf['event_listeners'] = array (
       array(

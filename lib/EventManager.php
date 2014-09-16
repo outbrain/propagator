@@ -21,6 +21,12 @@ class EventManager {
      * @param    array    $conf    The global config information
      */
     public function __construct($conf) {
+        if (!empty($conf['event_listener_dir']) && file_exists($conf['event_listener_dir'])) {
+            $this->listeners_dir = $conf['event_listener_dir'];
+            if (substr($this->listeners_dir, 0, -1) != "/") {
+                $this->listeners_dir .= "/";
+            }
+        }
         if (!empty($conf['event_listeners']) && is_array($conf['event_listeners'])) {
             foreach ($conf['event_listeners'] as $el) {
                 $this->add_listener($el);

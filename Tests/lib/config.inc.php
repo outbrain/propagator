@@ -41,33 +41,38 @@ $conf['two_step_approval_environments'] = array(
 $conf['history_visible_to_all'] = true;
 
 /*
+ * Change default event listeners dir for tests
+ */
+$conf['event_listener_dir'] = "./Tests/lib/listeners/";
+
+/*
  * Event listeners to test with
  */
 $conf['event_listeners'] = array(
     array(
         'event' => array('new_script', 'approve_script', 'comment_script'),
         'class' => 'DumpListener',
-        'file'  => './Tests/lib/listeners/DumpListener.php',
+        'file'  => 'DumpListener.php',
     ),
     array(
         'event' => 'approve_script',
         'class' => 'DumpAndStopListener',
-        'file'  => './Tests/lib/listeners/DumpAndStopListener.php'
+        'file'  => 'DumpAndStopListener.php'
     ),
     array(
         'event' => 'approve_script',
         'class' => 'DumpListener',
-        'file'  => './Tests/lib/listeners/DumpListener.php'
+        'file'  => 'DumpListener.php'
     ),
     array(
         'event' => 'mark_script',
         'class' => 'DumpListener',
-        'file'  => './Tests/lib/listeners/DumpListener.php',        
+        'file'  => 'DumpListener.php',        
     ),
     array(
         'event' => 'redeploy_script',
         'class' => 'BogusListener',
-        'file'  => '/foo/BogusListener.php',
+        'file'  => 'BogusListener.php',
     ),
 );
 
