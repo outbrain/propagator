@@ -1347,6 +1347,40 @@ class PropagatorModel {
     	return $datas;
     }
 
+    
+    function get_propagate_script_and_instance_and_deployment ($propagate_script_id=null, $propagate_script_instance_deployment_id=null) {
+        $datas = array();
+        
+        if ($propagate_script_id != null) {
+            $where = "WHERE propagate_script.propagate_script_id = " . $propagate_script_id;
+        } elseif ($propagate_script_instance_deployment_id != null) {
+            $where = "WHERE propagate_script_instance_deployment.propagate_script_instance_deployment_id = " . $propagate_script_instance_deployment_id;
+        }
+        
+        if (!empty($where)) {
+            $datas = $this->get_database()->query("
+                    SELECT
+                        propagate_script.propagate_script_id,
+                        propagate_script.database_role_id,
+                        propagate_script.default_schema,
+                        propagate_script.description,
+                        database_instance.environment,
+                        propagate_script_instance_deployment.deployment_type,
+                        propagate_script_instance_deployment.deployment_status,
+                        propagate_script_instance_deployment.processing_start_time,
+                        propagate_script_instance_deployment.processing_end_time,
+                        propagate_script_instance_deployment.last_message
+                    FROM
+                        propagate_script
+                        JOIN propagate_script_instance_deployment USING (propagate_script_id)
+                        JOIN database_instance USING (database_instance_id)
+                    $where
+                    ")->fetchAll();
+        }
+        
+        return $datas;
+    }
+    
 
     function get_propagate_script_instance_deployment($propagate_script_id, $submitter) {
     	if(empty($submitter)) {

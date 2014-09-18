@@ -827,3 +827,78 @@ In the above, all scripts issued against instances of the `Hive` role, are
 stripped of commented lines (which the connector dislikes and will not
 accept).
 
+##### Event Listeners
+
+You can add listeners to propagator that will be called/activated when
+a certain hook/event occurs. With this feature, you can notify other
+tools and/or logs of when propagator scripts are created, deployed, etc...
+
+The following is an example of what a listener might look like. In this listener,
+we are simply writing to a log file when our event occurs.
+
+```php
+<?php
+require_once "EventListenerInterface.php";
+
+class MyListener implements EventListenerInterface {
+  
+  public function update ($event) {
+    file_put_contents("/tmp/listener_log.log", $event->name, FILE_APPEND);
+  }
+  
+}
+
+?>
+```
+
+The listener's update method will be pass an `Event` object that will describe the event
+that has just occurred. Each `Event` object will have the following properties. Not all
+properties will have a value for every event. It is dependant on whether or not that information
+was available/applicable to the event.
+
+| Property | Description |
+| -------- | ----------- |
+| name     | The name of the event that just occurred (see table below) |
+| script_id | The unique id of the propagator script that is related to the event |
+| role      | The role related to the event |
+| schema    | The schema related to the event |
+| user      | The user that performed the action related to the event |
+| description | The description of the propagator script that is related to the event |
+| comment     | The comment left on the propagator script that is related to the event (only for comment_script events|
+| comment_mark | The mark left on the comment on the propagator script that is related to the event (only for comment_script events) |
+| instances    | An associative array of each environment that was affected by the event. Each instance in the array can have the following keys that further describe the status of the environment after the event has occurred: "environment", "deployment_status", "marked_status", "deployment_type", "processing_start_time", "processing_end_time", "last_message" |
+
+
+Listeners live in the listeners directory that is apart of propagator's file tree. Or
+you can change the location of the listeners directory by changing the value of 
+`$conf['event_listener_dir']`. To register your listener, you will need to add it 
+to `conf/config.inc.php` under `$conf['event_listeners']`. A listener can be 
+registered for multiple events or just one. Below are examples of a listener 
+registered for multiple events followed by a listener registered for just one.
+
+    $conf['event_listeners'] = array (
+      array(
+        'event' => array('new_script', 'approve_script'),
+        'file'  => "MyListener.php",
+        'class' => "MyListener",
+      ),
+      array(
+        'event' => "execute_script",
+        'file'  => "MyListenerExecute.php",
+        'class' => "MyListenerExecute",
+      )
+    );
+
+Below is a list of potential events/hooks you can register for and a short
+description of what is happening in that particular event
+
+| Event Name        | Description                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| new_script        | Someone has created a new propagator script                                        |
+| redeploy_script   | Someone has redeployed a propagator script                                         |
+| approve_script    | Someone has approved a propagator script                                           |
+| disapprove_script | Someone has disapproved a propagatorscript                                         |
+| execute_script    | Someone has executed a propagator script in an environment                         |
+| mark_script       | Someone has manually marked a propagator script for a certain environment          |
+| skip_script       | Someone has elected to skip a propagator script executing in a certain environment |
+| comment_script    | Someone has left a comment on a propagator script                                  |
