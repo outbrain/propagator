@@ -679,26 +679,42 @@ class Propagator {
     }
 
 
-
-
     public function rewire_database_instance() {
     	$data['database_instance_id'] = get_var('database_instance_id');
     	$data['assigned_role_ids'] = get_var('assigned_role_ids');
-
-   		try
-   		{
-            if (!$this->user_is_dba()) {
-                throw new Exception("Unauthorized");
-            }
+    
+    	try
+    	{
+    		if (!$this->user_is_dba()) {
+    			throw new Exception("Unauthorized");
+    		}
     		$this->data_model->rewire_database_instance($data['database_instance_id'], $data['assigned_role_ids']);
-            return $this->redirect("database_instance", "database_instance_id=" . $data['database_instance_id']);
-   		}
-   		catch (Exception $e)
-   		{
-            return $this->redirect("database_instance", "database_instance_id=" . $data['database_instance_id'] . "&error_message=".$e->getMessage());
-   		}
+    		return $this->redirect("database_instance", "database_instance_id=" . $data['database_instance_id']);
+    	}
+    	catch (Exception $e)
+    	{
+    		return $this->redirect("database_instance", "database_instance_id=" . $data['database_instance_id'] . "&error_message=".$e->getMessage());
+    	}
     }
 
+
+    public function delete_database_instance() {
+    	$data['database_instance_id'] = get_var('database_instance_id');
+    
+    	try
+    	{
+    		if (!$this->user_is_dba()) {
+    			throw new Exception("Unauthorized");
+    		}
+    		$this->data_model->delete_database_instance($data['database_instance_id']);
+    		return $this->redirect("database_instances"	);
+    	}
+    	catch (Exception $e)
+    	{
+    		return $this->redirect("database_instance", "database_instance_id=" . $data['database_instance_id'] . "&error_message=".$e->getMessage());
+    	}
+    }
+    
 
     public function database_instance_topology() {
     	if (!$this->user_is_dba()) {

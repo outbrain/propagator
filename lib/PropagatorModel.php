@@ -449,13 +449,13 @@ class PropagatorModel {
 
 
     function rewire_database_instance($database_instance_id, $assigned_role_ids) {
-        $database = $this->get_database();
-        $assigned_role_ids = array_map(
-                function($e) use ($database, $database_instance_id) { return "(".$database->quote($database_instance_id).", ".$database->quote($e).")"; },
-                $assigned_role_ids
-        );
-
-      	$this->get_database()->query("
+    	$database = $this->get_database();
+    	$assigned_role_ids = array_map(
+    			function($e) use ($database, $database_instance_id) { return "(".$database->quote($database_instance_id).", ".$database->quote($e).")"; },
+    			$assigned_role_ids
+    	);
+    
+    	$this->get_database()->query("
       	    start transaction;
       	    delete from
       	            database_instance_role
@@ -470,6 +470,25 @@ class PropagatorModel {
       	    commit;
    	    ");
     }
+    
+
+
+    function delete_database_instance($database_instance_id) {
+    	$database = $this->get_database();
+    
+    	$this->get_database()->query("
+      	    start transaction;
+			delete from database_instance_query_mapping where database_instance_id=" . $this->get_database()->quote($database_instance_id) . ";
+			delete from database_instance_schema_mapping where database_instance_id=" . $this->get_database()->quote($database_instance_id) . ";
+    		delete from database_instance_role where database_instance_id=" . $this->get_database()->quote($database_instance_id) . ";
+			delete from propagate_script_instance_deployment  where database_instance_id=" . $this->get_database()->quote($database_instance_id) . ";
+			delete from database_instance where database_instance_id=" . $this->get_database()->quote($database_instance_id) . ";
+      	    commit;
+   	    ");
+    }
+        
+    
+    
 
     function get_database_instance_topology($database_instance, $username, $password) {
     	$host = $database_instance ['host'];

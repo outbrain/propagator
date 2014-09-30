@@ -133,7 +133,8 @@
         <ul id="action_tabs" class="nav nav-tabs">
             <li class="active"><a href="#duplicate_instance_tab" data-toggle="tab"><span class="glyphicon glyphicon-plus"></span> Duplicate</a></li>
             <li><a href="#rewire_instance_tab" data-toggle="tab"><span class="glyphicon glyphicon-random"></span> Rewire</a></li>
-        </ul>
+            <li><a href="#delete_instance_tab" data-toggle="tab"><span class="glyphicon glyphicon-remove-circle"></span> Delete</a></li>
+		</ul>
 
         <div class="tab-content">
             <div class="tab-pane active" id="duplicate_instance_tab">
@@ -182,6 +183,22 @@
                     </form>
                 </div>
             </div>
+
+            <div class="tab-pane" id="delete_instance_tab">
+                <h6>Delete this instance</h6>
+
+                <div class="pull-left">
+                    Completely forget this instance. It will not be deployed to; there will be no history for this instance.
+                </div>
+                
+                <div class="pull-right">
+                    <form action="index.php" method="post" class="form-inline" name="delete_database_instance_form" id="delete_database_instance_form">
+                        <input type="hidden" name="action" value="delete_database_instance">
+                        <input type="hidden" name="database_instance_id" value="<?php echo htmlspecialchars($instance["database_instance_id"]); ?>">
+                        <input class="btn-danger btn-small" type="submit" value="Delete" name="submit"/>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 <?php } ?>
@@ -203,7 +220,14 @@
     	    	}
     		});
     	});            
-            
+
+    	$("#delete_database_instance_form").submit(function() {
+    		if (confirm('Are you sure you want to delete this instance?')) {
+    			return true;
+    		}
+    		return false;
+    	});                 
+    	
 	});
 </script>
 
