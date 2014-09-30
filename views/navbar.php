@@ -1,7 +1,7 @@
 <div class="navbar navbar-fixed-top">
   <div class="navbar-inner">
     <div class="container">
-      <a class="brand" href="<?php echo site_url() ?>"><img src="img/outbrain-logo-s.png" alt="outbrain"><br/>propagator</a>
+      <a class="brand" href="https://github.com/outbrain/propagator"><img src="img/outbrain-logo-s.png" alt="outbrain"><br/>propagator</a>
       <div class="nav-collapse">
         <ul class="nav">
            <li class="divider-vertical"></li>
