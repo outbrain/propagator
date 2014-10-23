@@ -5,7 +5,7 @@
 # Requires fpm: https://github.com/jordansissel/fpm
 #
 
-release_version="1.0.4"
+release_version="1.0.5"
 release_dir=/tmp/propagator-release
 release_files_dir=$release_dir/propagator
 rm -rf $release_dir/*

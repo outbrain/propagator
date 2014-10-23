@@ -272,3 +272,6 @@ th.database_instance_env {
     color: #2c2c2c;
 }
 
+.tab-pane .tab-pane-section {
+	padding-bottom: 48px;
+}

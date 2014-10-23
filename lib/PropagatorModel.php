@@ -370,13 +370,13 @@ class PropagatorModel {
 
 
     function rewire_database_role($database_role_id, $assigned_instance_ids) {
-        $database = $this->get_database();
-        $assigned_instance_ids = array_map(
-                function($e) use ($database, $database_role_id) { return "(".$database->quote($e).", ".$database->quote($database_role_id).")"; },
-                $assigned_instance_ids
-        );
-
-      	$this->get_database()->query("
+    	$database = $this->get_database();
+    	$assigned_instance_ids = array_map(
+    			function($e) use ($database, $database_role_id) { return "(".$database->quote($e).", ".$database->quote($database_role_id).")"; },
+    			$assigned_instance_ids
+    	);
+    
+    	$this->get_database()->query("
       	    start transaction;
       	    delete from
       	            database_instance_role
@@ -392,6 +392,30 @@ class PropagatorModel {
    	    ");
     }
 
+
+    function rewire_database_role_schemas($database_role_id, $assigned_schema_ids) {
+    	$database = $this->get_database();
+    	$assigned_schema_ids = array_map(
+    			function($e) use ($database, $database_role_id) { return "(".$database->quote($e).", ".$database->quote($database_role_id).")"; },
+    			$assigned_schema_ids
+    	);
+    
+    	$this->get_database()->query("
+      	    start transaction;
+      	    delete from
+      	            database_role_known_deploy_schema
+      	        where
+      	            database_role_id = " . $this->get_database()->quote($database_role_id) . "
+      	    ;
+      	    insert into
+      	            database_role_known_deploy_schema (known_deploy_schema_id, database_role_id)
+      	        values
+      	            " . implode(",", $assigned_schema_ids) . "
+      	    ;
+      	    commit;
+   	    ");
+    }
+    
 
     function duplicate_database_instance($database_instance_id, $new_database_instance_host, $new_database_instance_port, $new_database_instance_description) {
         $new_database_instance_host = trim($new_database_instance_host);
@@ -542,6 +566,27 @@ class PropagatorModel {
     		")->fetchAll();
     	return $datas;
     }
+    
+    
+    function get_known_schemas_by_role($database_role) {
+    	$datas = $this->get_database()->query("
+    		SELECT
+    			known_deploy_schema_id, schema_name, known_deploy_schema.is_default,
+    			count(database_instance_id) > 0 as has_mapping
+    		FROM
+    			known_deploy_schema
+    			JOIN database_role_known_deploy_schema USING (known_deploy_schema_id)
+    			LEFT JOIN database_instance_schema_mapping ON (schema_name = from_schema)
+   			WHERE
+    			database_role_id = " . $this->get_database()->quote($database_role) . "
+    		GROUP BY
+    			known_deploy_schema_id, schema_name, known_deploy_schema.is_default
+    		ORDER BY
+    			schema_name
+    		")->fetchAll();
+    	return $datas;
+    }    
+    
     
     function get_database_roles_by_instance($database_instance_id) {
     	$datas = $this->get_database()->query("

@@ -548,7 +548,11 @@ class Propagator {
     	$data['instances'] = $this->data_model->get_instances_by_role($data['database_role_id']);
     	$data['instances_compact'] = implode("\n", array_map(function($instance) { return $instance['host'].":".$instance['port']; }, $data['instances']));
     	$data['assigned_instance_ids'] = array_map(function($instance) { return $instance['database_instance_id']; }, $data['instances']);
-
+    	
+    	$data['all_known_schemas'] = $this->data_model->get_known_schemas();
+    	$data['assigned_schemas'] = $this->data_model->get_known_schemas_by_role($data['database_role_id']);
+    	$data['assigned_schemas_ids'] = array_map(function($schema) { return $schema['known_deploy_schema_id']; }, $data['assigned_schemas']);
+    	 
     	$data['query_mappings'] = safe_presentation_query_mappings($this->data_model->get_database_role_query_mapping($data['database_role_id']));
 
     	$this->load->view("database_role", $data);
@@ -589,21 +593,40 @@ class Propagator {
     public function rewire_database_role() {
     	$data['database_role_id'] = get_var('database_role_id');
     	$data['assigned_instance_ids'] = get_var('assigned_instance_ids');
-
-   		try
-   		{
-            if (!$this->user_is_dba()) {
-                throw new Exception("Unauthorized");
-            }
+    
+    	try
+    	{
+    		if (!$this->user_is_dba()) {
+    			throw new Exception("Unauthorized");
+    		}
     		$this->data_model->rewire_database_role($data['database_role_id'], $data['assigned_instance_ids']);
-            return $this->redirect("database_role", "database_role_id=" . $data['database_role_id']);
-   		}
-   		catch (Exception $e)
-   		{
-            return $this->redirect("database_role", "database_role_id=" . $data['database_role_id'] . "&error_message=".$e->getMessage());
-   		}
+    		return $this->redirect("database_role", "database_role_id=" . $data['database_role_id']);
+    	}
+    	catch (Exception $e)
+    	{
+    		return $this->redirect("database_role", "database_role_id=" . $data['database_role_id'] . "&error_message=".$e->getMessage());
+    	}
     }
 
+
+    public function rewire_database_role_schemas() {
+    	$data['database_role_id'] = get_var('database_role_id');
+    	$data['assigned_schema_ids'] = get_var('assigned_schema_ids');
+    
+    	try
+    	{
+    		if (!$this->user_is_dba()) {
+    			throw new Exception("Unauthorized");
+    		}
+    		$this->data_model->rewire_database_role_schemas($data['database_role_id'], $data['assigned_schema_ids']);
+    		return $this->redirect("database_role", "database_role_id=" . $data['database_role_id']);
+    	}
+    	catch (Exception $e)
+    	{
+    		return $this->redirect("database_role", "database_role_id=" . $data['database_role_id'] . "&error_message=".$e->getMessage());
+    	}
+    }
+    
     public function compare_database_role() {
     	if (!$this->user_is_dba()) {
     		throw new Exception("Unauthorized");

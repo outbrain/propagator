@@ -101,30 +101,58 @@
             </div>
 
             <div class="tab-pane" id="rewire_role_tab">
-                <h6>Rewire hosts</h6>
-
-                <div class="pull-left">
-                    Assign this role to other hosts; remove this role from other hosts
-                </div>
-
-                <div class="pull-right">
-                    <form action="index.php" method="post" class="form-inline" name="rewire_database_role_form" id="rewire_database_role_form">
-                        <input type="hidden" name="action" value="rewire_database_role">
-                        <input type="hidden" name="database_role_id" value="<?php echo htmlspecialchars($database_role["database_role_id"]); ?>">
-                        <select class="chosen-select" multiple="true" name="assigned_instance_ids[]">
-                            <?php foreach($all_database_instances as $instance) { ?>
-                                <tr>
-                                    <option value="<?php echo $instance["database_instance_id"] ?>"
-                                        <?php if(in_array($instance["database_instance_id"], $assigned_instance_ids)) {?>
-                                            selected="true"
-                                        <?php } ?>
-                                    ><?php echo $instance["host"] ?>:<?php echo $instance["port"] ?></option>
-                                </tr>
-                            <?php } ?>
-                        </select>
-                        <input class="btn-primary btn-small" type="submit" value="Rewire" name="submit"/>
-                    </form>
-                </div>
+            	<div class="tab-pane-section">
+	                <h6>Rewire hosts</h6>
+	
+	                <div class="pull-left">
+	                    Assign this role to other hosts; remove this role from other hosts
+	                </div>
+	
+	                <div class="pull-right">
+	                    <form action="index.php" method="post" class="form-inline" name="rewire_database_role_form" id="rewire_database_role_form">
+	                        <input type="hidden" name="action" value="rewire_database_role">
+	                        <input type="hidden" name="database_role_id" value="<?php echo htmlspecialchars($database_role["database_role_id"]); ?>">
+	                        <select class="chosen-select chosen-select-instances" multiple="true" name="assigned_instance_ids[]">
+	                            <?php foreach($all_database_instances as $instance) { ?>
+	                                <tr>
+	                                    <option value="<?php echo $instance["database_instance_id"] ?>"
+	                                        <?php if(in_array($instance["database_instance_id"], $assigned_instance_ids)) {?>
+	                                            selected="true"
+	                                        <?php } ?>
+	                                    ><?php echo $instance["host"] ?>:<?php echo $instance["port"] ?></option>
+	                                </tr>
+	                            <?php } ?>
+	                        </select>
+	                        <input class="btn-primary btn-small" type="submit" value="Rewire" name="submit"/>
+	                    </form>
+	                </div>
+				</div>                
+                <div class="tab-pane-section">
+	                <h6>Rewire known schemas</h6>
+	
+	                <div class="pull-left">
+	                    Associate schemas with this role
+	                </div>
+	
+	                <div class="pull-right">
+	                    <form action="index.php" method="post" class="form-inline" name="rewire_database_role_schema_form" id="rewire_database_role_schema_form">
+	                        <input type="hidden" name="action" value="rewire_database_role_schemas">
+	                        <input type="hidden" name="database_role_id" value="<?php echo htmlspecialchars($database_role["database_role_id"]); ?>">
+	                        <select class="chosen-select chosen-select-schemas" multiple="true" name="assigned_schema_ids[]">
+	                            <?php foreach($all_known_schemas as $schema) { ?>
+	                                <tr>
+	                                    <option value="<?php echo $schema["known_deploy_schema_id"] ?>"
+	                                        <?php if(in_array($schema["known_deploy_schema_id"], $assigned_schemas_ids)) {?>
+	                                            selected="true"
+	                                        <?php } ?>
+	                                    ><?php echo $schema["schema_name"] ?></option>
+	                                </tr>
+	                            <?php } ?>
+	                        </select>
+	                        <input class="btn-primary btn-small" type="submit" value="Rewire" name="submit"/>
+	                    </form>
+	                </div>
+	            </div>
             </div>
         </div>
     </div>
@@ -132,8 +160,12 @@
 
 <script lang="JavaScript">
     $(document).ready(function() {
-        $(".chosen-select").chosen({
+        $(".chosen-select.chosen-select-instances").chosen({
             placeholder_text_multiple: "Choose instance",
+            width: "480px"
+        });
+        $(".chosen-select.chosen-select-schemas").chosen({
+            placeholder_text_multiple: "Choose schema",
             width: "480px"
         });
     });
