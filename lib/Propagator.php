@@ -921,7 +921,7 @@ class Propagator {
             } elseif (!empty($details['propagate_script_instance_deployment_id'])) {
                 $queried_info = $this->data_model->get_propagate_script_and_instance_and_deployment(null, $details['propagate_script_instance_deployment_id']);
                 if (!empty($queried_info[0]['propagate_script_id'])) {
-                    $event['script_id']   = $queried_info[0]['propagator_script_id'];
+                    $event['script_id']   = $queried_info[0]['propagate_script_id'];
                     $event['description'] = $queried_info[0]['description'];
                     $event['schema']      = $queried_info[0]['default_schema'];
                     $event['role']        = $queried_info[0]['database_role_id'];
