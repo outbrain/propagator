@@ -113,10 +113,15 @@
 	$(document).ready(function()  {
 
 		var databaseRoles = {
-			<?php foreach ($database_roles as $role)  { ?>
-				"<?php echo $role['database_role_id'] ?>" : <?php echo $role['has_schema'] ?>, 
-			<?php } ?>
-		};
+				<?php foreach ($database_roles as $role)  { ?>
+					"<?php echo $role['database_role_id'] ?>" : <?php echo $role['has_schema'] ?>, 
+				<?php } ?>
+			};
+		var databaseRolesMappedSchemas = {
+				<?php foreach ($database_roles_mapped_schema_names as $role_schemas)  { ?>
+					"<?php echo $role_schemas['database_role_id'] ?>" : "<?php echo $role_schemas['role_mapped_schema_names'] ?>", 
+				<?php } ?>
+			};
 		function reviewDatabaseRole() {
 			if (databaseRoles[$("#database_role_id").val()] >= 0) {
 				return true;
@@ -129,15 +134,25 @@
 			return (databaseRoles[$("#database_role_id").val()] == 1);
 		}
 
-		function checkIfSchemaInputCanBeDisabled() {
+		function applySchemaFiltering() {
+			
 			if (currentRoleMayRequireSchema()) {
 				$('#script_default_schema').removeAttr('disabled');
 			} else {
 				$('#script_default_schema').attr('disabled','disabled');
 			} 
+			var supportedSchemas = databaseRolesMappedSchemas[$("#database_role_id").val()].split(",").filter(function (schema_name) {return schema_name != '';});
+			if (supportedSchemas.length > 0) {
+				$('a[data-type=known_schema]').hide();
+				supportedSchemas.forEach(function(schema_name) {
+					$('a[data-type=known_schema][data-value='+schema_name+']').show();
+				});
+			} else {
+				$('a[data-type=known_schema]').show();
+			}			
 		}
 		$("#database_role_id").on('input propertychange paste', function() {
-			checkIfSchemaInputCanBeDisabled();
+			applySchemaFiltering();
 		});
 		
 		function reviewSchemaNameSubmission() {
@@ -192,12 +207,12 @@
 		
 		$('[data-type="database_role"]').click(function() {
 			$("#database_role_id").val($(this).attr("data-value"));
-			checkIfSchemaInputCanBeDisabled();
+			applySchemaFiltering();
 		});
 		$('[data-type="known_schema"]').click(function() {
 			$("#script_default_schema").val($(this).attr("data-value"));
 		});
 
-		checkIfSchemaInputCanBeDisabled();
+		applySchemaFiltering();
 });
 </script>

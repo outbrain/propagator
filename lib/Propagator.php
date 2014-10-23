@@ -179,6 +179,7 @@ class Propagator {
     	
     	$data['database_roles'] = $this->data_model->get_database_roles();
     	$data['known_schemas'] = $this->data_model->get_known_schemas();
+    	$data['database_roles_mapped_schema_names'] = $this->data_model->get_database_roles_mapped_schema_names();
     	$data['has_credentials'] = $this->has_credentials();
 
     	$data["last_script"] = $this->data_model->get_last_propagate_script_for_submitter($this->get_auth_user());

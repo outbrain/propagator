@@ -586,6 +586,24 @@ class PropagatorModel {
     		")->fetchAll();
     	return $datas;
     }    
+
+
+    function get_database_roles_mapped_schema_names() {
+    	$datas = $this->get_database()->query("
+    		SELECT
+    			database_role.database_role_id,
+    			IFNULL(GROUP_CONCAT(schema_name ORDER BY schema_name), '') AS role_mapped_schema_names
+    		FROM
+    			database_role
+    			LEFT JOIN database_role_known_deploy_schema USING (database_role_id) 
+    			LEFT JOIN known_deploy_schema USING (known_deploy_schema_id)
+    		GROUP BY
+    			database_role.database_role_id
+    		ORDER BY
+    			database_role.database_role_id
+    		")->fetchAll();
+    	return $datas;
+    }
     
     
     function get_database_roles_by_instance($database_instance_id) {
