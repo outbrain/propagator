@@ -149,6 +149,9 @@
 				supportedSchemas.forEach(function(schema_name) {
 					$('a[data-type=known_schema][data-value='+schema_name+']').show();
 				});
+				if (supportedSchemas.indexOf($("#script_default_schema").val()) < 0) {
+					$("#script_default_schema").val(supportedSchemas[0]);					
+				}
 			} else {
 				$('a[data-type=known_schema]').show();
 			}			
