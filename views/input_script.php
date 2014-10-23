@@ -138,8 +138,10 @@
 			
 			if (currentRoleMayRequireSchema()) {
 				$('#script_default_schema').removeAttr('disabled');
+				$('#select_schema').removeAttr('disabled');
 			} else {
 				$('#script_default_schema').attr('disabled','disabled');
+				$('#select_schema').attr('disabled','disabled');
 			} 
 			var supportedSchemas = databaseRolesMappedSchemas[$("#database_role_id").val()].split(",").filter(function (schema_name) {return schema_name != '';});
 			if (supportedSchemas.length > 0) {
