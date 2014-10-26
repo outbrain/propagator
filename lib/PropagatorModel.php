@@ -376,6 +376,16 @@ class PropagatorModel {
     			$assigned_instance_ids
     	);
     
+        $insert_statement = "";
+    	if ($assigned_instance_ids) {
+    		$insert_statement = "
+	      	    insert into
+	      	            database_instance_role (database_instance_id, database_role_id)
+	      	        values
+	      	            " . implode(",", $assigned_instance_ids) . "
+	      	    ;"
+       		;
+    	}
     	$this->get_database()->query("
       	    start transaction;
       	    delete from
@@ -383,11 +393,7 @@ class PropagatorModel {
       	        where
       	            database_role_id = " . $this->get_database()->quote($database_role_id) . "
       	    ;
-      	    insert into
-      	            database_instance_role (database_instance_id, database_role_id)
-      	        values
-      	            " . implode(",", $assigned_instance_ids) . "
-      	    ;
+      	    $insert_statement
       	    commit;
    	    ");
     }
@@ -400,6 +406,16 @@ class PropagatorModel {
     			$assigned_schema_ids
     	);
     
+        $insert_statement = "";
+    	if ($assigned_schema_ids) {
+    		$insert_statement = "
+      	    insert into
+      	            database_role_known_deploy_schema (known_deploy_schema_id, database_role_id)
+      	        values
+      	            " . implode(",", $assigned_schema_ids) . "
+      	    ;"
+       		;
+    	}
     	$this->get_database()->query("
       	    start transaction;
       	    delete from
@@ -407,11 +423,7 @@ class PropagatorModel {
       	        where
       	            database_role_id = " . $this->get_database()->quote($database_role_id) . "
       	    ;
-      	    insert into
-      	            database_role_known_deploy_schema (known_deploy_schema_id, database_role_id)
-      	        values
-      	            " . implode(",", $assigned_schema_ids) . "
-      	    ;
+    		$insert_statement
       	    commit;
    	    ");
     }
@@ -479,6 +491,16 @@ class PropagatorModel {
     			$assigned_role_ids
     	);
     
+    	$insert_statement = "";
+    	if ($assigned_role_ids) {
+    		$insert_statement = "
+    			insert into
+						database_instance_role (database_instance_id, database_role_id)
+	      		    values
+    		  	    " . implode(",", $assigned_role_ids) . "
+	      	    ;"
+    		;
+    	}
     	$this->get_database()->query("
       	    start transaction;
       	    delete from
@@ -486,11 +508,7 @@ class PropagatorModel {
       	        where
       	            database_instance_id = " . $this->get_database()->quote($database_instance_id) . "
       	    ;
-      	    insert into
-      	            database_instance_role (database_instance_id, database_role_id)
-      	        values
-      	            " . implode(",", $assigned_role_ids) . "
-      	    ;
+      	    $insert_statement
       	    commit;
    	    ");
     }
